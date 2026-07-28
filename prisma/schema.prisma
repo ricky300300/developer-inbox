@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProviderId {
+  resend
+}
+
+enum ConversationStatus {
+  open
+  archived
+}
+
+enum MessageDirection {
+  inbound
+  outbound
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  sessions             Session[]
+  providerConnections  ProviderConnection[]
+  conversations        Conversation[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model ProviderConnection {
+  id                     String     @id @default(cuid())
+  userId                 String     @map("user_id")
+  provider               ProviderId
+  apiKeyEncrypted        String     @map("api_key_encrypted")
+  webhookSecretEncrypted String?    @map("webhook_secret_encrypted")
+  config                 Json       @default("{}")
+  isActive               Boolean    @default(true) @map("is_active")
+  createdAt              DateTime   @default(now()) @map("created_at")
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+
+  @@index([userId])
+  @@map("provider_connections")
+}
+
+model Conversation {
+  id            String             @id @default(cuid())
+  userId        String             @map("user_id")
+  connectionId  String             @map("connection_id")
+  subject       String
+  participants  String
+  status        ConversationStatus @default(open)
+  lastMessageAt DateTime           @default(now()) @map("last_message_at")
+  createdAt     DateTime           @default(now()) @map("created_at")
+
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection ProviderConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  messages   Message[]
+
+  @@index([userId, lastMessageAt(sort: Desc)])
+  @@index([userId, status])
+  @@map("conversations")
+}
+
+model Message {
+  id                String           @id @default(cuid())
+  conversationId    String           @map("conversation_id")
+  direction         MessageDirection
+  fromAddress       String           @map("from_address")
+  toAddresses       String           @map("to_addresses")
+  subject           String
+  bodyHtml          String?          @map("body_html")
+  bodyText          String?          @map("body_text")
+  providerMessageId String           @map("provider_message_id")
+  messageIdHeader   String?          @map("message_id_header")
+  inReplyTo         String?          @map("in_reply_to")
+  headers           Json?
+  sentAt            DateTime         @default(now()) @map("sent_at")
+  connectionId      String           @map("connection_id")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  attachments  Attachment[]
+
+  @@unique([connectionId, providerMessageId])
+  @@index([conversationId, sentAt])
+  @@index([messageIdHeader])
+  @@index([inReplyTo])
+  @@map("messages")
+}
+
+model Attachment {
+  id                   String  @id @default(cuid())
+  messageId            String  @map("message_id")
+  filename             String
+  contentType          String? @map("content_type")
+  size                 Int?
+  providerAttachmentId String? @map("provider_attachment_id")
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@map("attachments")
+}
