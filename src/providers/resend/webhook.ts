@@ -76,7 +76,23 @@ export async function handleResendWebhook(args: {
     throw new Error("INVALID_WEBHOOK_SIGNATURE");
   }
 
+  if (process.env.NODE_ENV === "development") {
+    console.log("[webhook:resend] verified_event", {
+      type: event.type,
+      created_at: event.created_at,
+      email_id: event.data?.email_id,
+      from: event.data?.from,
+      to: event.data?.to,
+      subject: event.data?.subject,
+      message_id: event.data?.message_id,
+      attachmentCount: event.data?.attachments?.length ?? 0,
+    });
+  }
+
   if (event.type !== "email.received") {
+    if (process.env.NODE_ENV === "development") {
+      console.log("[webhook:resend] ignored_non_inbound", { type: event.type });
+    }
     return null;
   }
 
@@ -100,6 +116,9 @@ export async function handleResendWebhook(args: {
   const toRaw: string[] = Array.isArray(received.to)
     ? received.to.map(String)
     : event.data?.to ?? [];
+  const receivedForRaw: string[] = Array.isArray(received.received_for)
+    ? received.received_for.map(String)
+    : [];
 
   const attachments: AttachmentMeta[] = [];
 
@@ -157,6 +176,7 @@ export async function handleResendWebhook(args: {
     references,
     from: parseAddress(fromRaw),
     to: toRaw.map(parseAddress),
+    receivedFor: receivedForRaw.map(parseAddress),
     subject: received.subject ?? event.data?.subject ?? "(no subject)",
     html: received.html ?? undefined,
     text: received.text ?? undefined,

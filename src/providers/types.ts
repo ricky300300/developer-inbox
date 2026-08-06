@@ -45,6 +45,8 @@ export type InboundEmail = {
   references?: string[];
   from: EmailAddress;
   to: EmailAddress[];
+  /** Mailbox(es) on our side that actually received this email (provider-specific). */
+  receivedFor?: EmailAddress[];
   subject: string;
   html?: string;
   text?: string;

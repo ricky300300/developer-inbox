@@ -25,7 +25,8 @@ export const resendConfigFields: ConfigField[] = [
     type: "email",
     required: true,
     placeholder: "inbox@yourdomain.com",
-    description: "Verified address used when sending replies",
+    description:
+      "Fallback for new outbound mail. Replies use the address that received the inbound email.",
   },
 ];
 

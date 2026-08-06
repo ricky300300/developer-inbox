@@ -120,7 +120,10 @@ export async function ingestInboundEmail(args: {
       connectionId,
       direction: "inbound",
       fromAddress: inbound.from.email,
-      toAddresses: formatAddresses(inbound.to),
+      // Prefer the mailbox that actually received the mail (for reply-from)
+      toAddresses: formatAddresses(
+        inbound.receivedFor?.length ? inbound.receivedFor : inbound.to,
+      ),
       subject: inbound.subject || "(no subject)",
       bodyHtml: inbound.html,
       bodyText: inbound.text,

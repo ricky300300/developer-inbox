@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Inbox, LogOut, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const nav = [
   { href: "/inbox", label: "Inbox", icon: Inbox },
@@ -23,10 +24,11 @@ export function AppSidebar({ username }: { username: string }) {
 
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r border-border/60 bg-sidebar text-sidebar-foreground">
-      <div className="flex h-14 items-center border-b border-border/60 px-4">
+      <div className="flex h-14 items-center justify-between gap-2 border-b border-border/60 px-4">
         <Link href="/inbox" className="text-sm font-semibold tracking-tight">
           Developer Inbox
         </Link>
+        <ThemeToggle compact />
       </div>
       <nav className="flex flex-1 flex-col gap-1 p-2">
         {nav.map((item) => {

@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 function LoginForm() {
   const router = useRouter();
@@ -100,7 +101,10 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-800/40 via-background to-background px-4">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-800/40 via-background to-background px-4">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle compact />
+      </div>
       <div className="mb-8 text-center">
         <p className="text-sm font-medium tracking-[0.2em] text-muted-foreground uppercase">
           Developer Inbox

@@ -37,6 +37,20 @@ export function getFromAddress(config: DecryptedConfig): string {
   return fromEmail;
 }
 
+/** Reply from the mailbox that received the inbound mail; fall back to default from. */
+export function resolveReplyFromAddress(
+  inboundToAddresses: string,
+  config: DecryptedConfig,
+): string {
+  const mailbox = inboundToAddresses
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .find((email) => email.includes("@"));
+
+  if (mailbox) return mailbox;
+  return getFromAddress(config);
+}
+
 export async function sendConversationReply(args: {
   userId: string;
   conversationId: string;
@@ -62,7 +76,7 @@ export async function sendConversationReply(args: {
 
   const config = toDecryptedConfig(conversation.connection);
   const provider = getProvider(conversation.connection.provider);
-  const from = getFromAddress(config);
+  const from = resolveReplyFromAddress(lastInbound.toAddresses, config);
 
   const replyTo = lastInbound.fromAddress;
   const subject = conversation.subject.startsWith("Re:")

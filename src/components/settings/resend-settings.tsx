@@ -175,6 +175,9 @@ export function ResendSettings() {
                   onChange={(e) => setFromEmail(e.target.value)}
                   required
                 />
+                <p className="text-xs text-muted-foreground">
+                  Used for new outbound mail. Replies use the address that received the inbound email.
+                </p>
               </div>
 
               {active ? (
