@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { Search } from "lucide-react";
+import { PenSquare, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -44,6 +44,8 @@ export function ConversationList({
   query?: string;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const composing = pathname === "/inbox/compose";
   const [pending, startTransition] = useTransition();
   const [search, setSearch] = useState(query ?? "");
 
@@ -59,15 +61,26 @@ export function ConversationList({
       startTransition(() => {
         const params = new URLSearchParams();
         if (next) params.set("q", next);
-        router.push(params.size ? `/inbox?${params}` : "/inbox");
+        // Keep user on compose while searching the list
+        const base = composing ? "/inbox/compose" : "/inbox";
+        router.push(params.size ? `${base}?${params}` : base);
       });
     }, 250);
     return () => clearTimeout(handle);
-  }, [search, query, router]);
+  }, [search, query, router, composing]);
 
   return (
     <div className="flex h-full flex-col border-r border-border/60">
-      <div className="border-b border-border/60 p-3">
+      <div className="space-y-2 border-b border-border/60 p-3">
+        <Link
+          href="/inbox/compose"
+          className={cn(
+            "inline-flex h-8 w-full items-center justify-start gap-2 rounded-lg bg-primary px-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80",
+          )}
+        >
+          <PenSquare className="size-4" />
+          Compose
+        </Link>
         <div className="relative">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -83,20 +96,20 @@ export function ConversationList({
           <div className="flex flex-col items-center justify-center gap-2 px-6 py-16 text-center">
             <p className="text-sm font-medium">No conversations</p>
             <p className="text-sm text-muted-foreground">
-              Connect Resend in Settings and point your webhook here to start receiving mail.
+              Compose a new email or connect Resend to receive inbound mail.
             </p>
             <Link
-              href="/settings"
+              href="/inbox/compose"
               className="mt-2 text-sm text-foreground underline-offset-4 hover:underline"
             >
-              Open Settings
+              Compose email
             </Link>
           </div>
         ) : (
           <ul>
             {conversations.map((c) => {
               const preview = c.messages[0];
-              const active = activeId === c.id;
+              const active = !composing && activeId === c.id;
               return (
                 <li key={c.id}>
                   <Link

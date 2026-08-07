@@ -93,7 +93,9 @@ export async function sendConversationReply(args: {
   }
 
   const bodyText = args.text?.trim() || stripHtml(args.html ?? "");
-  const bodyHtml = args.html?.trim() || undefined;
+  const bodyHtml =
+    args.html?.trim() ||
+    (bodyText ? plainTextToEmailHtml(bodyText) : undefined);
 
   if (!bodyText && !bodyHtml) {
     throw new Error("Reply body is required");
@@ -135,4 +137,32 @@ export async function sendConversationReply(args: {
 
 function stripHtml(html: string): string {
   return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Fallback when the client only sends plain text. */
+function plainTextToEmailHtml(text: string): string {
+  const paragraphs = text
+    .split(/\n{2,}/)
+    .map((block) => {
+      const withBreaks = escapeHtml(block).replace(/\n/g, "<br>");
+      return `<p style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#222222;">${withBreaks || "&nbsp;"}</p>`;
+    })
+    .join("");
+
+  return [
+    `<!DOCTYPE html>`,
+    `<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /></head>`,
+    `<body style="margin:0;padding:0;background-color:#ffffff;">`,
+    `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">`,
+    `<tr><td style="padding:0;">${paragraphs}</td></tr></table>`,
+    `</body></html>`,
+  ].join("");
 }

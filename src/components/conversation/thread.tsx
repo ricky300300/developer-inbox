@@ -1,11 +1,9 @@
 "use client";
 
-import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Paperclip } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { EmailComposer } from "@/components/conversation/email-composer";
 
 export type ThreadMessage = {
   id: string;
@@ -121,8 +119,6 @@ export function ConversationThread({
   messages: ThreadMessage[];
 }) {
   const router = useRouter();
-  const [body, setBody] = useState("");
-  const [sending, setSending] = useState(false);
 
   const lastInbound = [...messages].reverse().find((m) => m.direction === "inbound");
   const replyTo = lastInbound?.fromAddress ?? "";
@@ -130,29 +126,19 @@ export function ConversationThread({
     ? formatAddresses(lastInbound.toAddresses).split(",")[0]?.trim() || ""
     : "";
 
-  async function onReply(e: FormEvent) {
-    e.preventDefault();
-    if (!body.trim()) return;
-    setSending(true);
-    try {
-      const res = await fetch(`/api/conversations/${conversationId}/reply`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: body }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error ?? "Failed to send reply");
-        return;
-      }
-      setBody("");
-      toast.success("Reply sent");
-      router.refresh();
-    } catch {
-      toast.error("Failed to send reply");
-    } finally {
-      setSending(false);
+  async function handleSend(body: { html: string; text: string }) {
+    const res = await fetch(`/api/conversations/${conversationId}/reply`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ html: body.html, text: body.text }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      toast.error(data.error ?? "Failed to send reply");
+      throw new Error(data.error ?? "Failed to send reply");
     }
+    toast.success("Reply sent");
+    router.refresh();
   }
 
   return (
@@ -178,38 +164,7 @@ export function ConversationThread({
         )}
       </div>
 
-      <form
-        onSubmit={onReply}
-        className="shrink-0 border-t border-border/60 bg-background/95 px-6 py-4 backdrop-blur"
-      >
-        <p className="mb-3 text-sm font-medium">Reply</p>
-        <div className="mb-3 grid grid-cols-[3.5rem_1fr] gap-x-3 gap-y-1 text-sm">
-          {replyFrom ? (
-            <>
-              <span className="text-muted-foreground">From</span>
-              <span className="truncate text-foreground/90">{replyFrom}</span>
-            </>
-          ) : null}
-          {replyTo ? (
-            <>
-              <span className="text-muted-foreground">To</span>
-              <span className="truncate text-foreground/90">{replyTo}</span>
-            </>
-          ) : null}
-        </div>
-        <Textarea
-          placeholder="Write your reply…"
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          rows={6}
-          className="min-h-28 resize-y bg-muted/20"
-        />
-        <div className="mt-3 flex items-center justify-end gap-2">
-          <Button type="submit" disabled={sending || !body.trim()}>
-            {sending ? "Sending…" : "Send"}
-          </Button>
-        </div>
-      </form>
+      <EmailComposer from={replyFrom} to={replyTo} onSend={handleSend} />
     </div>
   );
 }

@@ -128,3 +128,11 @@
     @apply font-sans;
   }
 }
+
+.email-composer.is-empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted-foreground);
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
