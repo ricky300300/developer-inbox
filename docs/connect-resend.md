@@ -24,17 +24,14 @@ When finished, mail sent to your domain appears in the Inbox, and you can reply 
 - For production inbound: a domain you control (DNS access)
 - For local webhooks: a public HTTPS tunnel (e.g. [ngrok](https://ngrok.com), Cloudflare Tunnel, or Vercel preview URL)
 
-Set `NEXT_PUBLIC_APP_URL` to the URL Resend can reach:
+Webhook URLs in Settings are built from the **current request host**. Open the app at the same public URL Resend will call (your Vercel domain, or the ngrok URL), and the webhook link is correct automatically.
+
+Only set `NEXT_PUBLIC_APP_URL` if you browse via one host (e.g. `localhost`) but need Settings to show a different public URL (e.g. an ngrok tunnel):
 
 ```bash
-# Local with tunnel example
+# Optional override — usually not needed
 NEXT_PUBLIC_APP_URL="https://your-subdomain.ngrok-free.app"
-
-# Production example
-NEXT_PUBLIC_APP_URL="https://your-app.vercel.app"
 ```
-
-Restart the app after changing env vars so Settings shows the correct webhook URL.
 
 ---
 
@@ -87,53 +84,45 @@ https://<your-app-host>/api/webhooks/resend/<connectionId>
 
 1. Start the app: `npm run dev`
 2. Start a tunnel to port `3000`
-3. Set `NEXT_PUBLIC_APP_URL` to the tunnel HTTPS URL
-4. Restart `npm run dev`
+3. Open Developer Inbox **through the tunnel URL** (so Settings copies a public webhook URL), **or** set optional `NEXT_PUBLIC_APP_URL` to the tunnel HTTPS URL
 
 ### Production
 
-Deploy to Vercel (or similar), set env vars in the host dashboard, and use your production URL as `NEXT_PUBLIC_APP_URL`.
+Deploy to Vercel (or similar). Open Settings on your production host — the webhook URL uses that host automatically.
 
 ---
 
-## Step 4 — Connect Resend in Developer Inbox
+## Step 4 — Connect Resend in Developer Inbox (3 steps)
 
-1. Register or sign in to Developer Inbox.
-2. Open **Settings**.
-3. Under **Resend**, fill in:
+Open **Settings → Resend**. The UI walks you through this order on purpose — Resend only shows the signing secret **after** you create a webhook with a URL.
 
-| Field | Where it comes from |
-|-------|---------------------|
-| **API Key** | Step 1 (`re_...`) |
-| **Webhook Signing Secret** | Leave blank for a moment — you will get this in Step 5 after creating the webhook (`whsec_...`) |
-| **Default From Address** | A verified sender on your Resend domain (e.g. `hello@yourdomain.com`) |
+### Step 1 — Save API credentials
 
-4. Click **Connect Resend** (you can save the API key and from address first; update the webhook secret right after Step 5).
-5. Copy the **Webhook URL** shown in Settings. It looks like:
+1. Paste your Resend **API key** (`re_...`).
+2. Set a **Default From Address** (verified sender on your domain).
+3. Click **Save & continue**.
 
-```text
-https://your-app.example/api/webhooks/resend/clxxxxxxxx
-```
+Developer Inbox creates a connection id and shows your webhook URL.
 
-That URL is unique per connection. Do not share it publicly beyond Resend’s webhook config.
+### Step 2 — Create the webhook in Resend
 
----
+1. Copy the **Webhook URL** from Settings (includes your connection id).
+2. Open [Resend Webhooks](https://resend.com/webhooks) → **Add Webhook**.
+3. Paste the URL and subscribe to **`email.received`**.
+4. Save the webhook.
+5. Copy the **Signing secret** (`whsec_...`) Resend shows after save.
 
-## Step 5 — Create the Resend webhook
+### Step 3 — Save the signing secret
 
-1. Open [Resend Webhooks](https://resend.com/webhooks).
-2. Click **Add Webhook**.
-3. Paste the Developer Inbox webhook URL from Settings.
-4. Subscribe to **`email.received`** (required for inbound).
-5. Save the webhook.
-6. Copy the **Signing secret** (`whsec_...`).
-7. Return to Developer Inbox **Settings**, paste the signing secret into **Webhook Signing Secret**, and save/update the connection.
+1. Return to Developer Inbox Settings.
+2. Paste the signing secret into **Webhook Signing Secret**.
+3. Click **Finish setup**.
 
-Developer Inbox verifies every webhook with this secret (Svix signatures). Without it, inbound events are rejected.
+Inbound mail will not verify until this secret is saved.
 
 ---
 
-## Step 6 — Send a test inbound email
+## Step 5 — Send a test inbound email
 
 1. From any mailbox, send an email **to** an address on your receiving domain  
    (e.g. `you@your-receiving-domain.com`).
@@ -143,7 +132,7 @@ Developer Inbox verifies every webhook with this secret (Svix signatures). Witho
 
 ### If nothing appears
 
-- Confirm the webhook URL matches Settings and `NEXT_PUBLIC_APP_URL`
+- Confirm the webhook URL matches Settings (and is publicly reachable by Resend)
 - Confirm the event type includes `email.received`
 - Confirm the signing secret matches
 - Check the app logs (in development you will see `[webhook]` lines)
@@ -152,7 +141,7 @@ Developer Inbox verifies every webhook with this secret (Svix signatures). Witho
 
 ---
 
-## Step 7 — Send a new outbound email (optional)
+## Step 6 — Send a new outbound email (optional)
 
 1. Click **Compose** in the inbox.
 2. **From** prefills with your Settings default; you can edit it to any **verified** Resend sender.
@@ -195,7 +184,7 @@ Notes:
 - [ ] Never commit `.env` or API keys  
 - [ ] Use `ENCRYPTION_KEY` so provider secrets are encrypted at rest  
 - [ ] Keep webhook signing secret set and rotated if leaked  
-- [ ] Prefer HTTPS only for `NEXT_PUBLIC_APP_URL`  
+- [ ] Prefer HTTPS webhook URLs Resend can reach (tunnel or production host)  
 - [ ] Restrict Resend API key scope when possible  
 
 ---

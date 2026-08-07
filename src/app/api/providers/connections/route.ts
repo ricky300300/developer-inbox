@@ -3,7 +3,8 @@ import { z } from "zod";
 import { getSessionUser } from "@/lib/auth/session";
 import { encryptSecret } from "@/lib/crypto/secrets";
 import { prisma } from "@/lib/db";
-import { getProvider, isProviderId } from "@/providers/registry";
+import { getRequestOrigin } from "@/lib/request-origin";
+import { isProviderId } from "@/providers/registry";
 import type { ProviderId } from "@/providers/types";
 
 const upsertSchema = z.object({
@@ -14,7 +15,16 @@ const upsertSchema = z.object({
   connectionId: z.string().optional(),
 });
 
-export async function GET() {
+function webhookUrlFor(
+  origin: string,
+  provider: string,
+  connectionId: string,
+): string {
+  const path = `/api/webhooks/${provider}/${connectionId}`;
+  return origin ? `${origin}${path}` : path;
+}
+
+export async function GET(request: Request) {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -25,7 +35,7 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
   });
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "";
+  const origin = getRequestOrigin(request);
 
   return NextResponse.json({
     connections: connections.map((c) => {
@@ -40,9 +50,7 @@ export async function GET() {
         fromEmail: typeof settings.fromEmail === "string" ? settings.fromEmail : "",
         hasApiKey: Boolean(c.apiKeyEncrypted),
         hasWebhookSecret: Boolean(c.webhookSecretEncrypted),
-        webhookUrl: appUrl
-          ? `${appUrl}/api/webhooks/${c.provider}/${c.id}`
-          : `/api/webhooks/${c.provider}/${c.id}`,
+        webhookUrl: webhookUrlFor(origin, c.provider, c.id),
         createdAt: c.createdAt,
       };
     }),
@@ -72,7 +80,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unsupported provider" }, { status: 400 });
     }
 
-    const adapter = getProvider(provider);
     const config = { fromEmail };
 
     if (connectionId) {
@@ -104,12 +111,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "API key is required" }, { status: 400 });
     }
 
-    if (adapter.receiveMode === "webhook" && !webhookSecret?.trim()) {
-      return NextResponse.json(
-        { error: "Webhook signing secret is required" },
-        { status: 400 },
-      );
-    }
+    // Webhook signing secret is optional on first save — Resend only
+    // provides it after the webhook URL (which needs connectionId) is registered.
 
     const created = await prisma.providerConnection.create({
       data: {

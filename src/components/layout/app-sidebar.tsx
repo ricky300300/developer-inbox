@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Inbox, LogOut, Settings } from "lucide-react";
+import { BookOpen, Inbox, LogOut, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 const nav = [
   { href: "/inbox", label: "Inbox", icon: Inbox },
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/docs/connect-resend", label: "Docs", icon: BookOpen },
 ];
 
 export function AppSidebar({ username }: { username: string }) {

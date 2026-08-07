@@ -43,7 +43,9 @@ Fill in:
 | `DATABASE_URL` | Postgres for the app (Supabase **pooler** `:6543` is fine at runtime) |
 | `DIRECT_URL` | Postgres for **migrations** (Supabase **direct** `:5432` — required; pooler hangs) |
 | `ENCRYPTION_KEY` | 32-byte key, base64 — `openssl rand -base64 32` |
-| `NEXT_PUBLIC_APP_URL` | Public app URL (used for webhook links in Settings) |
+| `NEXT_PUBLIC_APP_URL` | **Optional.** Override for webhook links when Host is wrong (e.g. tunnel while browsing localhost) |
+
+Webhook URLs shown in Settings are built from the current request host (`Host` / `X-Forwarded-*`). You usually do **not** need `NEXT_PUBLIC_APP_URL`.
 
 > **Supabase tip:** `prisma migrate deploy` through the transaction pooler (`*.pooler.supabase.com:6543`) often hangs forever. Always set `DIRECT_URL` to the Direct connection string from the Supabase dashboard.
 
@@ -56,22 +58,20 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000), register an account, then connect Resend.
 
-### 4. Connect Resend
+### 4. Connect Resend (3 steps)
 
-Follow the full walkthrough:
+Resend only shows the webhook signing secret **after** you create a webhook with a URL — so Settings walks you through this order:
 
-**[docs/connect-resend.md](docs/connect-resend.md)** — step-by-step domain, webhook, and Settings setup.
+1. **Settings** → save Resend API key + default From → copy the webhook URL  
+2. **Resend** → add webhook on `email.received` with that URL → copy `whsec_…`  
+3. **Settings** → paste signing secret → finish  
 
----
+Full walkthrough (also linked from the app under **Docs** / Settings → Setup guide):
 
-## Screenshots of the flow
+- In the running app: `/docs/connect-resend`
+- In the repo: [docs/connect-resend.md](docs/connect-resend.md)
 
-Typical path after setup:
-
-1. **Settings** → paste Resend API key, webhook secret, default From  
-2. **Resend** → webhook on `email.received` → your `/api/webhooks/resend/:id` URL  
-3. **Inbox** → inbound threads appear automatically  
-4. **Reply** or **Compose** → send via Resend  
+After setup: inbound mail appears in **Inbox**; **Reply** / **Compose** send via Resend.
 
 ---
 
@@ -149,7 +149,7 @@ User UI (Inbox / Compose) ──send──► Resend Emails API ──► Recipi
 DATABASE_URL=                 # App runtime (pooler :6543 OK)
 DIRECT_URL=                   # Migrations (direct :5432 — required on Supabase)
 ENCRYPTION_KEY=               # openssl rand -base64 32
-NEXT_PUBLIC_APP_URL=          # https://your-host (webhook display + absolute URLs)
+NEXT_PUBLIC_APP_URL=          # Optional override for webhook base URL
 ```
 
 Never commit `.env`. `.env.example` is safe to commit.
@@ -160,7 +160,8 @@ Never commit `.env`. `.env.example` is safe to commit.
 
 | Guide | Description |
 |-------|-------------|
-| [Connect Resend](docs/connect-resend.md) | Domains, MX, webhooks, Settings, testing inbound/outbound |
+| `/docs/connect-resend` (in-app) | Same guide, linked from Settings and the sidebar |
+| [docs/connect-resend.md](docs/connect-resend.md) | Domains, MX, webhooks, Settings, testing inbound/outbound |
 
 ---
 

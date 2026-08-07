@@ -14,9 +14,10 @@ export const resendConfigFields: ConfigField[] = [
     key: "webhookSecret",
     label: "Webhook Signing Secret",
     type: "password",
-    required: true,
+    required: false,
     placeholder: "whsec_xxxxxxxx",
-    description: "From the Resend webhook settings (Svix signing secret)",
+    description:
+      "Added in step 3 after creating the Resend webhook (Resend shows this only after save)",
     secret: true,
   },
   {
