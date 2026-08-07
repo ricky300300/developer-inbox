@@ -430,11 +430,9 @@ export const EmailComposer = forwardRef<EmailComposerHandle, EmailComposerProps>
     );
 
     const mailActionBar = (
-      <div className="relative shrink-0 px-[0.75rem] pt-[0.35rem] pb-[0.75rem]">
+      <div className="shrink-0 px-[0.75rem] pt-[0.35rem] pb-[0.75rem]">
         {formatOpen ? (
-          <div className="pointer-events-auto absolute right-3 bottom-full left-3 z-10 mb-[0.35rem]">
-            {formatToolbar}
-          </div>
+          <div className="mb-[0.5rem]">{formatToolbar}</div>
         ) : null}
         <div className="flex items-center gap-[0.25rem]">
           <Button
