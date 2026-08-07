@@ -16,7 +16,15 @@ Developer Inbox is **not** an email provider. It sits on top of providers like R
 - Resend provider: inbound webhooks, outbound send, reply-from receiving address
 - Encrypted API keys & webhook secrets at rest
 - Dark / light theme
+- Responsive layout (mobile drawer nav + desktop sidebar)
 - Provider adapter pattern ready for SES, Mailgun, Postmark, and others later
+
+---
+
+## Requirements
+
+- Node.js 20+
+- PostgreSQL (local or hosted, e.g. Supabase)
 
 ---
 
@@ -183,6 +191,16 @@ Never commit `.env`. `.env.example` is safe to commit.
 
 ---
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks, and PR guidelines.
+
+Please follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+Security reports: [SECURITY.md](SECURITY.md).
+
+---
+
 ## License
 
-Open source — use and contribute as you like. Add a `LICENSE` file if you publish under a specific license.
+[MIT](LICENSE)

@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Paperclip } from "lucide-react";
+import { ArrowLeft, Paperclip } from "lucide-react";
 import { EmailComposer } from "@/components/conversation/email-composer";
 
 export type ThreadMessage = {
@@ -47,16 +48,16 @@ function EmailMessage({ message }: { message: ThreadMessage }) {
 
   return (
     <article className="border-b border-border/60 last:border-b-0">
-      <div className="px-6 py-5">
+      <div className="px-4 py-5 sm:px-6">
         <div className="space-y-1.5 text-sm">
           <div className="grid grid-cols-[4.5rem_1fr] gap-x-3 gap-y-1 sm:grid-cols-[5rem_1fr]">
             <span className="text-muted-foreground">From</span>
-            <span className="break-all font-medium text-foreground">
+            <span className="min-w-0 break-all font-medium text-foreground">
               {message.fromAddress}
             </span>
 
             <span className="text-muted-foreground">To</span>
-            <span className="break-all text-foreground/90">
+            <span className="min-w-0 break-all text-foreground/90">
               {formatAddresses(message.toAddresses)}
             </span>
 
@@ -72,12 +73,14 @@ function EmailMessage({ message }: { message: ThreadMessage }) {
             {message.attachments.map((a) => (
               <span
                 key={a.id}
-                className="inline-flex items-center gap-1.5 rounded border border-border/70 bg-muted/30 px-2.5 py-1 text-xs text-muted-foreground"
+                className="inline-flex max-w-full items-center gap-1.5 rounded border border-border/70 bg-muted/30 px-2.5 py-1 text-xs text-muted-foreground"
               >
                 <Paperclip className="size-3.5 shrink-0" />
-                <span className="truncate">{a.filename}</span>
+                <span className="max-w-[min(100%,12rem)] truncate sm:max-w-[16rem]">
+                  {a.filename}
+                </span>
                 {a.size != null ? (
-                  <span className="text-muted-foreground/70">
+                  <span className="shrink-0 text-muted-foreground/70">
                     ({Math.max(1, Math.round(a.size / 1024))} KB)
                   </span>
                 ) : null}
@@ -87,11 +90,11 @@ function EmailMessage({ message }: { message: ThreadMessage }) {
         ) : null}
       </div>
 
-      <div className="px-6 pb-6">
+      <div className="px-4 pb-6 sm:px-6">
         {hasHtml ? (
-          <div className="overflow-hidden rounded-md border border-border/50 bg-white text-neutral-900 shadow-sm">
+          <div className="overflow-x-auto rounded-md border border-border/50 bg-white text-neutral-900 shadow-sm">
             <div
-              className="email-body max-w-none px-5 py-4 text-[15px] leading-relaxed [&_a]:text-blue-600 [&_a]:underline [&_img]:max-w-full [&_p]:my-2 [&_table]:max-w-full"
+              className="email-body max-w-none px-4 py-4 text-[15px] leading-relaxed sm:px-5 [&_a]:text-blue-600 [&_a]:underline [&_img]:h-auto [&_img]:max-w-full [&_p]:my-2 [&_table]:max-w-full"
               dangerouslySetInnerHTML={{ __html: message.bodyHtml! }}
             />
           </div>
@@ -143,18 +146,29 @@ export function ConversationThread({
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <header className="shrink-0 border-b border-border/60 px-6 py-4">
-        <h1 className="text-xl font-semibold tracking-tight text-balance">
-          {subject}
-        </h1>
-        <p className="mt-1 truncate text-sm text-muted-foreground">
-          {formatAddresses(participants)}
-        </p>
+      <header className="shrink-0 border-b border-border/60 px-3 py-3 sm:px-6 sm:py-4">
+        <div className="flex items-start gap-2">
+          <Link
+            href="/inbox"
+            aria-label="Back to inbox"
+            className="mt-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-foreground hover:bg-muted md:hidden"
+          >
+            <ArrowLeft className="size-5" />
+          </Link>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg font-semibold tracking-tight text-balance sm:text-xl">
+              {subject}
+            </h1>
+            <p className="mt-1 truncate text-sm text-muted-foreground">
+              {formatAddresses(participants)}
+            </p>
+          </div>
+        </div>
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {messages.length === 0 ? (
-          <div className="px-6 py-16 text-center text-sm text-muted-foreground">
+          <div className="px-4 py-16 text-center text-sm text-muted-foreground sm:px-6">
             No messages in this thread yet.
           </div>
         ) : (

@@ -2,6 +2,19 @@
   "name": "developer-inbox",
   "version": "0.1.0",
   "private": true,
+  "description": "Conversation inbox for API-first email providers (Resend and more)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ricky300300/developer-inbox.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ricky300300/developer-inbox/issues"
+  },
+  "homepage": "https://github.com/ricky300300/developer-inbox#readme",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "prisma generate && next build",

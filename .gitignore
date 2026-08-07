@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+*.swp
 
 # debug
 npm-debug.log*
@@ -43,4 +44,9 @@ next-env.d.ts
 
 # prisma generated client
 /src/generated
+
+# IDE / local tooling
+.idea/
+.vscode/
+.cursor/
 

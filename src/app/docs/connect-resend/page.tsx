@@ -16,14 +16,14 @@ export default async function ConnectResendDocsPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/60">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-4">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <Link
             href="/"
-            className="text-sm font-medium text-foreground hover:opacity-80"
+            className="truncate text-sm font-medium text-foreground hover:opacity-80"
           >
             Developer Inbox
           </Link>
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex shrink-0 items-center gap-3 text-sm">
             <Link
               href="/settings"
               className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
@@ -39,7 +39,7 @@ export default async function ConnectResendDocsPage() {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-3xl px-6 py-10">
+      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
         <MarkdownDoc source={md} />
       </main>
     </div>

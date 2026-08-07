@@ -50,7 +50,7 @@ NEXT_PUBLIC_APP_URL="https://your-subdomain.ngrok-free.app"
 ### Option A — Custom domain (recommended)
 
 1. Go to [Resend Domains](https://resend.com/domains).
-2. Add your domain (e.g. `honestify.me` or a subdomain like `mail.honestify.me`).
+2. Add your domain (e.g. `example.com` or a subdomain like `mail.example.com`).
 3. Add the DNS records Resend shows (SPF, DKIM, and any others).
 4. Wait until the domain status is **Verified**.
 
@@ -60,9 +60,9 @@ NEXT_PUBLIC_APP_URL="https://your-subdomain.ngrok-free.app"
 2. Enable **Receiving** for that domain.
 3. Add the **MX** record Resend provides.
 
-**Important:** MX must not conflict with an existing mailbox provider on the same hostname. If `honestify.me` already receives mail via Google/Microsoft, use a **subdomain** for Resend inbound (e.g. `inbox.honestify.me`) so you do not take over the root MX.
+**Important:** MX must not conflict with an existing mailbox provider on the same hostname. If `example.com` already receives mail via Google/Microsoft, use a **subdomain** for Resend inbound (e.g. `inbox.example.com`) so you do not take over the root MX.
 
-Once MX is correct, Resend accepts mail for **any address** at that domain (e.g. `ricky@inbox.honestify.me`, `support@inbox.honestify.me`).
+Once MX is correct, Resend accepts mail for **any address** at that domain (e.g. `you@inbox.example.com`, `support@inbox.example.com`).
 
 ### Option B — Resend-managed receiving address
 

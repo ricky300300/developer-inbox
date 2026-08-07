@@ -102,12 +102,15 @@ export function NewEmailComposer({ fromEmail }: { fromEmail?: string }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border/60 px-6 py-4">
-        <h1 className="text-xl font-semibold tracking-tight">New message</h1>
+      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border/60 px-4 py-3 sm:px-6 sm:py-4">
+        <h1 className="text-lg font-semibold tracking-tight sm:text-xl">
+          New message
+        </h1>
         <Button
           type="button"
           variant="ghost"
           size="icon"
+          className="size-10"
           aria-label="Close composer"
           onClick={() => router.push("/inbox")}
         >
@@ -116,7 +119,7 @@ export function NewEmailComposer({ fromEmail }: { fromEmail?: string }) {
       </header>
 
       <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
-        <div className="space-y-3 border-b border-border/60 px-6 py-4">
+        <div className="space-y-3 border-b border-border/60 px-4 py-4 sm:px-6">
           <div className="grid grid-cols-[4.5rem_1fr] items-center gap-x-3 gap-y-3 text-sm sm:grid-cols-[5rem_1fr]">
             <Label htmlFor="compose-from" className="text-muted-foreground">
               From
@@ -130,6 +133,7 @@ export function NewEmailComposer({ fromEmail }: { fromEmail?: string }) {
               onChange={(e) => setFrom(e.target.value)}
               required
               disabled={loadingFrom}
+              className="min-w-0"
             />
 
             <Label htmlFor="compose-to" className="text-muted-foreground">
@@ -144,6 +148,7 @@ export function NewEmailComposer({ fromEmail }: { fromEmail?: string }) {
               onChange={(e) => setTo(e.target.value)}
               required
               autoFocus
+              className="min-w-0"
             />
 
             <Label htmlFor="compose-subject" className="text-muted-foreground">
@@ -155,11 +160,12 @@ export function NewEmailComposer({ fromEmail }: { fromEmail?: string }) {
               placeholder="Subject"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
+              className="min-w-0"
             />
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
           <EmailComposer
             ref={editorRef}
             asForm={false}
@@ -174,20 +180,26 @@ export function NewEmailComposer({ fromEmail }: { fromEmail?: string }) {
           />
         </div>
 
-        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/60 px-6 py-4">
-          <p className="text-xs text-muted-foreground">
-            Prefills from Settings · must be a verified Resend sender · ⌘/Ctrl + Enter
+        <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-border/60 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <p className="hidden text-xs text-muted-foreground sm:block">
+            Prefills from Settings · must be a verified Resend sender · ⌘/Ctrl +
+            Enter
           </p>
           <div className="flex gap-2">
             <Button
               type="button"
               variant="ghost"
+              className="flex-1 sm:flex-none"
               onClick={() => router.push("/inbox")}
               disabled={sending}
             >
               Discard
             </Button>
-            <Button type="submit" disabled={sending || bodyEmpty || !to.trim() || !from.trim()}>
+            <Button
+              type="submit"
+              className="flex-1 sm:flex-none"
+              disabled={sending || bodyEmpty || !to.trim() || !from.trim()}
+            >
               {sending ? "Sending…" : "Send"}
             </Button>
           </div>

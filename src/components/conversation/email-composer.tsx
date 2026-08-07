@@ -339,12 +339,13 @@ export const EmailComposer = forwardRef<EmailComposerHandle, EmailComposerProps>
         </div>
 
         {showSendButton ? (
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">
+          <div className="mt-3 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="hidden text-xs text-muted-foreground sm:block">
               ⌘/Ctrl + Enter to send · Formatted for Gmail, Outlook, Apple Mail
             </p>
             <Button
               type={asForm ? "submit" : "button"}
+              className="w-full sm:w-auto"
               disabled={sending || disabled || isEmpty}
               onClick={asForm ? undefined : () => void handleSubmit()}
             >
@@ -360,7 +361,7 @@ export const EmailComposer = forwardRef<EmailComposerHandle, EmailComposerProps>
         <form
           onSubmit={handleSubmit}
           className={cn(
-            "shrink-0 border-t border-border/60 bg-background/95 px-6 py-4 backdrop-blur",
+            "shrink-0 border-t border-border/60 bg-background/95 px-4 py-4 backdrop-blur sm:px-6",
             className,
           )}
         >

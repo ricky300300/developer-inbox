@@ -19,10 +19,10 @@ export default async function InboxPage({
   });
 
   return (
-    <div className="grid h-[100dvh] grid-cols-1 md:grid-cols-[320px_1fr]">
+    <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[minmax(260px,320px)_1fr]">
       <ConversationList conversations={conversations} query={q} />
       <div className="hidden items-center justify-center md:flex">
-        <div className="max-w-sm px-6 text-center">
+        <div className="max-w-sm px-4 text-center sm:px-6">
           <p className="text-sm font-medium">Select a conversation</p>
           <p className="mt-1 text-sm text-muted-foreground">
             Choose a thread from the list, or compose a new email.

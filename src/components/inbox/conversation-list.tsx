@@ -70,12 +70,12 @@ export function ConversationList({
   }, [search, query, router, composing]);
 
   return (
-    <div className="flex h-full flex-col border-r border-border/60">
+    <div className="flex h-full min-h-0 flex-col border-r border-border/60 md:border-r">
       <div className="space-y-2 border-b border-border/60 p-3">
         <Link
           href="/inbox/compose"
           className={cn(
-            "inline-flex h-8 w-full items-center justify-start gap-2 rounded-lg bg-primary px-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80",
+            "inline-flex h-10 w-full items-center justify-start gap-2 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80 sm:h-8 sm:px-2.5",
           )}
         >
           <PenSquare className="size-4" />

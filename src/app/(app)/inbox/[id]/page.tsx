@@ -28,8 +28,8 @@ export default async function ConversationPage({
   if (!conversation) notFound();
 
   return (
-    <div className="grid h-[100dvh] grid-cols-1 md:grid-cols-[320px_1fr]">
-      <div className="hidden md:block">
+    <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[minmax(260px,320px)_1fr]">
+      <div className="hidden min-h-0 md:block">
         <ConversationList
           conversations={conversations}
           activeId={conversation.id}

@@ -201,9 +201,9 @@ export function ResendSettings() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6 p-6">
+    <div className="mx-auto w-full max-w-2xl space-y-6 p-4 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Connect Resend in three steps — API key, webhook URL, then signing
@@ -212,7 +212,7 @@ export function ResendSettings() {
         </div>
         <Link
           href="/docs/connect-resend"
-          className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 text-[0.8rem] font-medium hover:bg-muted hover:text-foreground"
+          className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-3 text-sm font-medium hover:bg-muted hover:text-foreground sm:h-7 sm:px-2.5 sm:text-[0.8rem]"
         >
           <BookOpen className="size-3.5" />
           Setup guide
@@ -313,16 +313,17 @@ export function ResendSettings() {
                     </div>
                     <div className="space-y-2 rounded-md border border-border/60 bg-muted/20 p-3">
                       <Label>Webhook URL</Label>
-                      <div className="flex gap-2">
+                      <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
                         <Input
                           readOnly
                           value={active.webhookUrl}
-                          className="font-mono text-xs"
+                          className="min-w-0 font-mono text-xs"
                         />
                         <Button
                           type="button"
                           variant="outline"
                           size="icon"
+                          className="size-10 shrink-0 self-end sm:size-8 sm:self-auto"
                           onClick={copyWebhook}
                         >
                           {copied ? (
@@ -377,16 +378,17 @@ export function ResendSettings() {
                 <section className="space-y-4">
                   <div className="space-y-2 rounded-md border border-border/60 bg-muted/20 p-3">
                     <Label>Webhook URL</Label>
-                    <div className="flex gap-2">
+                    <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
                       <Input
                         readOnly
                         value={active.webhookUrl}
-                        className="font-mono text-xs"
+                        className="min-w-0 font-mono text-xs"
                       />
                       <Button
                         type="button"
                         variant="outline"
                         size="icon"
+                        className="size-10 shrink-0 self-end sm:size-8 sm:self-auto"
                         onClick={copyWebhook}
                       >
                         {copied ? (
