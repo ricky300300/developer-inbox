@@ -40,9 +40,12 @@ Fill in:
 
 | Variable | Purpose |
 |----------|---------|
-| `DATABASE_URL` | Postgres connection string (Supabase pooler recommended) |
+| `DATABASE_URL` | Postgres for the app (Supabase **pooler** `:6543` is fine at runtime) |
+| `DIRECT_URL` | Postgres for **migrations** (Supabase **direct** `:5432` — required; pooler hangs) |
 | `ENCRYPTION_KEY` | 32-byte key, base64 — `openssl rand -base64 32` |
 | `NEXT_PUBLIC_APP_URL` | Public app URL (used for webhook links in Settings) |
+
+> **Supabase tip:** `prisma migrate deploy` through the transaction pooler (`*.pooler.supabase.com:6543`) often hangs forever. Always set `DIRECT_URL` to the Direct connection string from the Supabase dashboard.
 
 ### 3. Migrate and run
 
@@ -143,7 +146,8 @@ User UI (Inbox / Compose) ──send──► Resend Emails API ──► Recipi
 ## Environment reference
 
 ```bash
-DATABASE_URL=                 # Postgres (Supabase)
+DATABASE_URL=                 # App runtime (pooler :6543 OK)
+DIRECT_URL=                   # Migrations (direct :5432 — required on Supabase)
 ENCRYPTION_KEY=               # openssl rand -base64 32
 NEXT_PUBLIC_APP_URL=          # https://your-host (webhook display + absolute URLs)
 ```
