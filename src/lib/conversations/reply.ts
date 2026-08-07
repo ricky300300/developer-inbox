@@ -1,7 +1,18 @@
 import { decryptSecret } from "@/lib/crypto/secrets";
 import { prisma } from "@/lib/db";
+import { persistOutboundAttachmentFiles } from "@/lib/attachments/storage";
+import { formatMailboxAddress } from "@/lib/conversations/normalize";
+import {
+  extractEmailAddress,
+  normalizeOutboundAttachments,
+  parseMailboxForSend,
+} from "@/lib/email/mailbox";
 import { getProvider } from "@/providers/registry";
-import type { DecryptedConfig, ProviderId } from "@/providers/types";
+import type {
+  DecryptedConfig,
+  OutboundAttachment,
+  ProviderId,
+} from "@/providers/types";
 import type { ProviderConnection } from "@/generated/prisma/client";
 
 export function toDecryptedConfig(
@@ -42,12 +53,13 @@ export function resolveReplyFromAddress(
   inboundToAddresses: string,
   config: DecryptedConfig,
 ): string {
-  const mailbox = inboundToAddresses
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .find((email) => email.includes("@"));
-
-  if (mailbox) return mailbox;
+  for (const part of inboundToAddresses.split(",")) {
+    try {
+      return extractEmailAddress(part);
+    } catch {
+      // try next
+    }
+  }
   return getFromAddress(config);
 }
 
@@ -56,6 +68,7 @@ export async function sendConversationReply(args: {
   conversationId: string;
   html?: string;
   text?: string;
+  attachments?: OutboundAttachment[];
 }) {
   const conversation = await prisma.conversation.findFirst({
     where: { id: args.conversationId, userId: args.userId },
@@ -78,7 +91,7 @@ export async function sendConversationReply(args: {
   const provider = getProvider(conversation.connection.provider);
   const from = resolveReplyFromAddress(lastInbound.toAddresses, config);
 
-  const replyTo = lastInbound.fromAddress;
+  const replyTo = parseMailboxForSend(lastInbound.fromAddress, "recipient");
   const subject = conversation.subject.startsWith("Re:")
     ? conversation.subject
     : `Re: ${conversation.subject}`;
@@ -96,6 +109,7 @@ export async function sendConversationReply(args: {
   const bodyHtml =
     args.html?.trim() ||
     (bodyText ? plainTextToEmailHtml(bodyText) : undefined);
+  const attachments = normalizeOutboundAttachments(args.attachments);
 
   if (!bodyText && !bodyHtml) {
     throw new Error("Reply body is required");
@@ -109,6 +123,7 @@ export async function sendConversationReply(args: {
     text: bodyText,
     inReplyTo,
     references: references.length > 0 ? references : undefined,
+    attachments,
   });
 
   const message = await prisma.message.create({
@@ -116,7 +131,7 @@ export async function sendConversationReply(args: {
       conversationId: conversation.id,
       connectionId: conversation.connectionId,
       direction: "outbound",
-      fromAddress: from,
+      fromAddress: formatMailboxAddress(from),
       toAddresses: replyTo,
       subject,
       bodyHtml: bodyHtml,
@@ -124,8 +139,20 @@ export async function sendConversationReply(args: {
       providerMessageId: result.providerMessageId,
       inReplyTo,
       sentAt: new Date(),
+      attachments: {
+        create: attachments.map((a) => ({
+          filename: a.filename,
+          contentType: a.contentType,
+          size: a.size,
+        })),
+      },
     },
+    include: { attachments: true },
   });
+
+  if (message.attachments.length) {
+    await persistOutboundAttachmentFiles(message.attachments, attachments);
+  }
 
   await prisma.conversation.update({
     where: { id: conversation.id },

@@ -45,8 +45,12 @@ next-env.d.ts
 # prisma generated client
 /src/generated
 
+# local attachment files
+.data/
+
 # IDE / local tooling
 .idea/
 .vscode/
 .cursor/
+
 

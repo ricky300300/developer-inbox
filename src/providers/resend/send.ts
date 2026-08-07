@@ -23,6 +23,12 @@ export async function sendWithResend(
     throw new Error("Email body is required");
   }
 
+  const attachments = message.attachments?.map((a) => ({
+    filename: a.filename,
+    content: Buffer.from(a.content, "base64"),
+    ...(a.contentType ? { contentType: a.contentType } : {}),
+  }));
+
   const payload = {
     from: message.from,
     to: message.to,
@@ -30,6 +36,7 @@ export async function sendWithResend(
     ...(message.cc ? { cc: message.cc } : {}),
     ...(html ? { html } : { text: text! }),
     ...(html && text ? { text } : {}),
+    ...(attachments && attachments.length > 0 ? { attachments } : {}),
     ...(Object.keys(headers).length > 0 ? { headers } : {}),
   } satisfies CreateEmailOptions;
 

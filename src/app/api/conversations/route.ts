@@ -27,6 +27,16 @@ const composeSchema = z.object({
   from: z.string().optional(),
   html: z.string().optional(),
   text: z.string().optional(),
+  attachments: z
+    .array(
+      z.object({
+        filename: z.string().min(1),
+        contentType: z.string().optional(),
+        content: z.string().min(1),
+        size: z.number().int().nonnegative().optional(),
+      }),
+    )
+    .optional(),
 });
 
 export async function POST(request: Request) {
@@ -52,6 +62,7 @@ export async function POST(request: Request) {
       from: parsed.data.from || undefined,
       html: parsed.data.html,
       text: parsed.data.text,
+      attachments: parsed.data.attachments,
     });
 
     return NextResponse.json(
@@ -64,7 +75,9 @@ export async function POST(request: Request) {
     console.error("Compose error:", error);
     const status =
       message.includes("No active email provider") ||
-      message.includes("Invalid")
+      message.includes("Invalid") ||
+      message.includes("attachment") ||
+      message.includes("Attachments")
         ? 400
         : 500;
     return NextResponse.json({ error: message }, { status });

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import type { InboundEmail } from "@/providers/types";
 import {
   formatAddresses,
+  formatMailboxAddress,
   normalizeParticipants,
   normalizeSubject,
 } from "@/lib/conversations/normalize";
@@ -110,6 +111,7 @@ export async function ingestInboundEmail(args: {
         subject: inbound.subject || "(no subject)",
         participants: normalizeParticipants([inbound.from, ...inbound.to]),
         lastMessageAt: inbound.receivedAt,
+        unread: true,
       },
     });
   }
@@ -119,7 +121,7 @@ export async function ingestInboundEmail(args: {
       conversationId: conversation.id,
       connectionId,
       direction: "inbound",
-      fromAddress: inbound.from.email,
+      fromAddress: formatMailboxAddress(inbound.from),
       // Prefer the mailbox that actually received the mail (for reply-from)
       toAddresses: formatAddresses(
         inbound.receivedFor?.length ? inbound.receivedFor : inbound.to,
@@ -149,6 +151,7 @@ export async function ingestInboundEmail(args: {
     data: {
       lastMessageAt: inbound.receivedAt,
       subject: conversation.subject || inbound.subject,
+      unread: true,
     },
   });
 

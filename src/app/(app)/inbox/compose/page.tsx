@@ -1,43 +1,22 @@
-import { redirect } from "next/navigation";
-import { getSessionUser } from "@/lib/auth/session";
-import { listConversations } from "@/lib/conversations/queries";
-import {
-  getActiveConnectionForUser,
-  getFromAddress,
-  toDecryptedConfig,
-} from "@/lib/conversations/reply";
-import { ConversationList } from "@/components/inbox/conversation-list";
-import { NewEmailComposer } from "@/components/inbox/new-email-composer";
+"use client";
 
-export default async function ComposePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>;
-}) {
-  const user = await getSessionUser();
-  if (!user) redirect("/login");
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useCompose } from "@/components/compose/compose-provider";
 
-  const { q } = await searchParams;
-  const [conversations, connection] = await Promise.all([
-    listConversations({ userId: user.id, query: q }),
-    getActiveConnectionForUser(user.id),
-  ]);
+/** Opens the compose popup and returns to inbox (keeps old /inbox/compose links working). */
+export default function ComposePage() {
+  const router = useRouter();
+  const { openCompose } = useCompose();
 
-  let fromEmail: string | undefined;
-  if (connection) {
-    try {
-      fromEmail = getFromAddress(toDecryptedConfig(connection));
-    } catch {
-      fromEmail = undefined;
-    }
-  }
+  useEffect(() => {
+    openCompose();
+    router.replace("/inbox");
+  }, [openCompose, router]);
 
   return (
-    <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[minmax(260px,320px)_1fr]">
-      <div className="hidden min-h-0 md:block">
-        <ConversationList conversations={conversations} query={q} />
-      </div>
-      <NewEmailComposer fromEmail={fromEmail} />
+    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+      Opening composer…
     </div>
   );
 }

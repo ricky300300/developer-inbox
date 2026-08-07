@@ -77,6 +77,12 @@ export function NewEmailComposer({ fromEmail }: { fromEmail?: string }) {
           subject: subject.trim(),
           html: bodies.html,
           text: bodies.text,
+          attachments: bodies.attachments.map((a) => ({
+            filename: a.filename,
+            contentType: a.contentType,
+            content: a.content,
+            size: a.size,
+          })),
         }),
       });
       const data = await res.json();

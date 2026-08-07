@@ -26,13 +26,23 @@ type ResendWebhookEvent = {
 };
 
 function parseAddress(raw: string): EmailAddress {
-  const match = raw.match(/^(?:"?([^"]*)"?\s)?<?([^>]+)>?$/);
-  if (match) {
-    const name = match[1]?.trim();
-    const email = match[2]?.trim().toLowerCase();
+  const value = raw.trim();
+  if (!value) return { email: "unknown@unknown" };
+
+  const bare = /^[^\s<>"]+@[^\s<>"]+\.[^\s<>"]+$/;
+  if (bare.test(value)) {
+    return { email: value.toLowerCase() };
+  }
+
+  const angled = value.match(/^(?:"([^"]+)"|([^<]*?))\s*<\s*([^>]+@[^>]+)\s*>$/);
+  if (angled) {
+    const email = (angled[3] ?? "").trim().toLowerCase();
+    const name = (angled[1] ?? angled[2] ?? "").trim();
     return name ? { email, name } : { email };
   }
-  return { email: raw.trim().toLowerCase() };
+
+  const fallback = value.replace(/^<|>$/g, "").trim().toLowerCase();
+  return { email: fallback || "unknown@unknown" };
 }
 
 function headerValue(

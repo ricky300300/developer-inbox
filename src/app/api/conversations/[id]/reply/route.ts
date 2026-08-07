@@ -6,6 +6,16 @@ import { sendConversationReply } from "@/lib/conversations/reply";
 const replySchema = z.object({
   html: z.string().optional(),
   text: z.string().optional(),
+  attachments: z
+    .array(
+      z.object({
+        filename: z.string().min(1),
+        contentType: z.string().optional(),
+        content: z.string().min(1),
+        size: z.number().int().nonnegative().optional(),
+      }),
+    )
+    .optional(),
 });
 
 type Params = { params: Promise<{ id: string }> };
@@ -29,6 +39,7 @@ export async function POST(request: Request, { params }: Params) {
       conversationId: id,
       html: parsed.data.html,
       text: parsed.data.text,
+      attachments: parsed.data.attachments,
     });
 
     return NextResponse.json({ message });

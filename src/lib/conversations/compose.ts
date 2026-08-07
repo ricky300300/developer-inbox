@@ -1,9 +1,18 @@
 import { prisma } from "@/lib/db";
+import { persistOutboundAttachmentFiles } from "@/lib/attachments/storage";
 import { getProvider } from "@/providers/registry";
+import type { OutboundAttachment } from "@/providers/types";
 import {
   formatAddresses,
+  formatMailboxAddress,
   normalizeParticipants,
 } from "@/lib/conversations/normalize";
+import {
+  extractEmailAddress,
+  normalizeOutboundAttachments,
+  parseMailboxForSend,
+  parseRecipientList,
+} from "@/lib/email/mailbox";
 import {
   getActiveConnectionForUser,
   getFromAddress,
@@ -41,33 +50,7 @@ function plainTextToEmailHtml(text: string): string {
   ].join("");
 }
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-export function parseEmailAddress(raw: string, label = "email"): string {
-  const email = raw.trim().toLowerCase();
-  if (!email || !EMAIL_RE.test(email)) {
-    throw new Error(`Invalid ${label} address${email ? `: ${email}` : ""}`);
-  }
-  return email;
-}
-
-export function parseRecipientList(raw: string): string[] {
-  const emails = raw
-    .split(/[,;]+/)
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-
-  const unique = [...new Set(emails)];
-  for (const email of unique) {
-    if (!EMAIL_RE.test(email)) {
-      throw new Error(`Invalid email address: ${email}`);
-    }
-  }
-  if (unique.length === 0) {
-    throw new Error("At least one recipient is required");
-  }
-  return unique;
-}
+export { extractEmailAddress, parseMailboxForSend, parseRecipientList };
 
 export async function sendNewEmail(args: {
   userId: string;
@@ -76,6 +59,7 @@ export async function sendNewEmail(args: {
   from?: string;
   html?: string;
   text?: string;
+  attachments?: OutboundAttachment[];
 }) {
   const connection = await getActiveConnectionForUser(args.userId);
   if (!connection) {
@@ -90,6 +74,7 @@ export async function sendNewEmail(args: {
   const bodyHtml =
     args.html?.trim() ||
     (bodyText ? plainTextToEmailHtml(bodyText) : undefined);
+  const attachments = normalizeOutboundAttachments(args.attachments);
 
   if (!bodyText && !bodyHtml) {
     throw new Error("Email body is required");
@@ -98,7 +83,7 @@ export async function sendNewEmail(args: {
   const config = toDecryptedConfig(connection);
   const provider = getProvider(connection.provider);
   const from = args.from?.trim()
-    ? parseEmailAddress(args.from, "from")
+    ? parseMailboxForSend(args.from, "from")
     : getFromAddress(config);
 
   const result = await provider.send(config, {
@@ -107,34 +92,56 @@ export async function sendNewEmail(args: {
     subject,
     html: bodyHtml,
     text: bodyText,
+    attachments,
   });
 
   const now = new Date();
+  const fromEmail = extractEmailAddress(from);
+  const toEmails = to.map((t) => extractEmailAddress(t));
+
   const conversation = await prisma.conversation.create({
     data: {
       userId: args.userId,
       connectionId: connection.id,
       subject,
-      participants: normalizeParticipants([from, ...to]),
+      participants: normalizeParticipants([fromEmail, ...toEmails]),
       lastMessageAt: now,
+      unread: false,
       messages: {
         create: {
           connectionId: connection.id,
           direction: "outbound",
-          fromAddress: from,
+          fromAddress: formatMailboxAddress(from),
           toAddresses: formatAddresses(to),
           subject,
           bodyHtml: bodyHtml,
           bodyText: bodyText,
           providerMessageId: result.providerMessageId,
           sentAt: now,
+          attachments: {
+            create: attachments.map((a) => ({
+              filename: a.filename,
+              contentType: a.contentType,
+              size: a.size,
+            })),
+          },
         },
       },
     },
     include: {
-      messages: true,
+      messages: {
+        include: { attachments: true },
+      },
     },
   });
+
+  const createdMessage = conversation.messages[0];
+  if (createdMessage?.attachments.length) {
+    await persistOutboundAttachmentFiles(
+      createdMessage.attachments,
+      attachments,
+    );
+  }
 
   return conversation;
 }

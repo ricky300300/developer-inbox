@@ -1,10 +1,11 @@
 import { notFound, redirect } from "next/navigation";
+import { after } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getSessionUser } from "@/lib/auth/session";
 import {
   getConversationForUser,
-  listConversations,
+  markConversationRead,
 } from "@/lib/conversations/queries";
-import { ConversationList } from "@/components/inbox/conversation-list";
 import { ConversationThread } from "@/components/conversation/thread";
 
 export default async function ConversationPage({
@@ -12,36 +13,39 @@ export default async function ConversationPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ folder?: string }>;
 }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
   const { id } = await params;
-  const { q } = await searchParams;
+  const { folder } = await searchParams;
 
-  const [conversations, conversation] = await Promise.all([
-    listConversations({ userId: user.id, query: q }),
-    getConversationForUser({ userId: user.id, conversationId: id }),
-  ]);
+  const conversation = await getConversationForUser({
+    userId: user.id,
+    conversationId: id,
+  });
 
   if (!conversation) notFound();
 
+  if (conversation.unread) {
+    const userId = user.id;
+    const conversationId = conversation.id;
+    after(async () => {
+      await markConversationRead({ userId, conversationId });
+      revalidatePath("/inbox");
+    });
+  }
+
+  const backHref = folder === "sent" ? "/inbox?folder=sent" : "/inbox";
+
   return (
-    <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[minmax(260px,320px)_1fr]">
-      <div className="hidden min-h-0 md:block">
-        <ConversationList
-          conversations={conversations}
-          activeId={conversation.id}
-          query={q}
-        />
-      </div>
-      <ConversationThread
-        conversationId={conversation.id}
-        subject={conversation.subject}
-        participants={conversation.participants}
-        messages={conversation.messages}
-      />
-    </div>
+    <ConversationThread
+      conversationId={conversation.id}
+      subject={conversation.subject}
+      participants={conversation.participants}
+      messages={conversation.messages}
+      backHref={backHref}
+    />
   );
 }

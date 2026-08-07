@@ -27,6 +27,14 @@ export type AttachmentMeta = {
   providerAttachmentId?: string;
 };
 
+export type OutboundAttachment = {
+  filename: string;
+  contentType?: string;
+  /** Base64-encoded file contents */
+  content: string;
+  size?: number;
+};
+
 export type OutboundMessage = {
   from: string;
   to: string[];
@@ -36,6 +44,7 @@ export type OutboundMessage = {
   text?: string;
   inReplyTo?: string;
   references?: string[];
+  attachments?: OutboundAttachment[];
 };
 
 export type InboundEmail = {
