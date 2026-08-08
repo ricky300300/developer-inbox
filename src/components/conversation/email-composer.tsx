@@ -36,7 +36,34 @@ import {
   formatAttachmentSize,
   type ComposerAttachment,
 } from "@/lib/email/attachments-client";
-import { formatMailbox } from "@/lib/email/display";
+import { emailFromAddress, formatMailbox } from "@/lib/email/display";
+import { Input } from "@/components/ui/input";
+
+function bareRecipientEmails(raw: string): string {
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const part of raw.split(/[,;]+/)) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    const email = (emailFromAddress(trimmed) || trimmed).toLowerCase();
+    if (seen.has(email)) continue;
+    seen.add(email);
+    unique.push(emailFromAddress(trimmed) || trimmed);
+  }
+  return unique.join(", ");
+}
+
+function displayRecipientList(raw: string): string {
+  return raw
+    .split(/[,;]+/)
+    .map((part) => {
+      const trimmed = part.trim();
+      if (!trimmed) return "";
+      return formatMailbox(trimmed);
+    })
+    .filter(Boolean)
+    .join(", ");
+}
 
 type ToolbarAction =
   | "bold"
@@ -95,6 +122,7 @@ type EmailComposerProps = {
   onSend?: (body: {
     html: string;
     text: string;
+    to?: string;
     attachments: ComposerAttachment[];
   }) => Promise<void>;
   title?: string;
@@ -146,7 +174,19 @@ export const EmailComposer = forwardRef<EmailComposerHandle, EmailComposerProps>
     const [isEmpty, setIsEmpty] = useState(true);
     const [active, setActive] = useState<Record<string, boolean>>({});
     const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
-    const [formatOpen, setFormatOpen] = useState(false);
+    const [formatOpen, setFormatOpen] = useState(variant === "mail-reply");
+    const [toValue, setToValue] = useState(() => bareRecipientEmails(to ?? ""));
+    const [editingTo, setEditingTo] = useState(false);
+    const toPropRef = useRef(to);
+
+    // Only reset from the parent when the prop itself changes (e.g. Reply → Reply all),
+    // not when leaving edit mode — otherwise blur wipes typed recipients.
+    useEffect(() => {
+      if (toPropRef.current === to) return;
+      toPropRef.current = to;
+      setToValue(bareRecipientEmails(to ?? ""));
+      setEditingTo(false);
+    }, [to]);
 
     const syncToolbar = useCallback(() => {
       if (typeof document === "undefined") return;
@@ -264,11 +304,17 @@ export const EmailComposer = forwardRef<EmailComposerHandle, EmailComposerProps>
       const composed = composeEmailBodies(editorRef.current.innerHTML);
       if (composed.isEmpty) return;
 
+      if (isMailReply && !toValue.trim()) {
+        toast.error("Add at least one recipient");
+        return;
+      }
+
       setSending(true);
       try {
         await onSend({
           html: composed.html,
           text: composed.text,
+          to: isMailReply ? toValue.trim() : undefined,
           attachments,
         });
         clearEditor();
@@ -438,7 +484,12 @@ export const EmailComposer = forwardRef<EmailComposerHandle, EmailComposerProps>
           <Button
             type={asForm ? "submit" : "button"}
             className="rounded-full bg-[#0b57d0] px-[1.5rem] font-medium text-white hover:bg-[#0b57d0]/90 dark:bg-[#a8c7fa] dark:text-[#062e6f] dark:hover:bg-[#a8c7fa]/90"
-            disabled={sending || disabled || isEmpty}
+            disabled={
+              sending ||
+              disabled ||
+              isEmpty ||
+              (isMailReply && !toValue.trim())
+            }
             onClick={asForm ? undefined : () => void handleSubmit()}
           >
             {sending ? "Sending…" : "Send"}
@@ -504,9 +555,48 @@ export const EmailComposer = forwardRef<EmailComposerHandle, EmailComposerProps>
                 strokeWidth={2.25}
               />
             )}
-            <span className="truncate text-[0.875rem] font-medium text-foreground">
-              {to ? formatMailbox(to) : "Recipient"}
-            </span>
+            {editingTo ? (
+              <Input
+                type="text"
+                value={toValue}
+                autoFocus
+                onChange={(e) => setToValue(e.target.value)}
+                onBlur={() => {
+                  setToValue((prev) => bareRecipientEmails(prev));
+                  setEditingTo(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    (e.target as HTMLInputElement).blur();
+                  }
+                  if (e.key === "Escape") {
+                    e.preventDefault();
+                    setToValue(bareRecipientEmails(toPropRef.current ?? ""));
+                    setEditingTo(false);
+                  }
+                }}
+                placeholder="email@example.com, other@example.com"
+                disabled={sending || disabled}
+                aria-label="To"
+                className="h-auto min-w-0 flex-1 border-0 bg-transparent px-0 py-0 text-[0.875rem] font-medium text-foreground shadow-none focus-visible:ring-0 dark:bg-transparent"
+              />
+            ) : (
+              <button
+                type="button"
+                disabled={sending || disabled}
+                onClick={() => {
+                  setToValue((prev) => bareRecipientEmails(prev || to || ""));
+                  setEditingTo(true);
+                }}
+                className="min-w-0 flex-1 truncate text-left text-[0.875rem] font-medium text-foreground disabled:opacity-50"
+                aria-label="Edit recipients"
+              >
+                {toValue
+                  ? displayRecipientList(toValue)
+                  : "Add recipients"}
+              </button>
+            )}
           </div>
         ) : null}
         {editor}

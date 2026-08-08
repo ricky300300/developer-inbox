@@ -251,28 +251,24 @@ export function ComposePopup({ open, onOpenChange }: ComposePopupProps) {
       <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
         <div className="shrink-0 border-b border-border/50 px-4">
           <div className="flex items-center gap-2 border-b border-border/40 py-2">
-            <span className="w-12 shrink-0 text-sm text-muted-foreground">
-              From
-            </span>
             <Input
               type="email"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              placeholder={loadingFrom ? "Loading…" : "you@yourdomain.com"}
+              placeholder={loadingFrom ? "Loading…" : "From"}
+              aria-label="From"
               disabled={loadingFrom || sending}
               required
               className="h-8 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
             />
           </div>
           <div className="flex items-center gap-2 border-b border-border/40 py-2">
-            <span className="w-12 shrink-0 text-sm text-muted-foreground">
-              To
-            </span>
             <Input
               type="text"
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              placeholder="Recipients"
+              placeholder="To"
+              aria-label="To"
               required
               autoFocus
               disabled={sending}
@@ -290,28 +286,24 @@ export function ComposePopup({ open, onOpenChange }: ComposePopupProps) {
           </div>
           {showCc ? (
             <div className="flex items-center gap-2 border-b border-border/40 py-2">
-              <span className="w-12 shrink-0 text-sm text-muted-foreground">
-                Cc
-              </span>
               <Input
                 type="text"
                 value={cc}
                 onChange={(e) => setCc(e.target.value)}
                 placeholder="Cc"
+                aria-label="Cc"
                 disabled={sending}
                 className="h-8 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
               />
             </div>
           ) : null}
           <div className="flex items-center gap-2 py-2">
-            <span className="w-12 shrink-0 text-sm text-muted-foreground">
-              Subject
-            </span>
             <Input
               type="text"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="Subject"
+              aria-label="Subject"
               disabled={sending}
               className="h-8 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
             />

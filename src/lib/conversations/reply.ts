@@ -6,6 +6,7 @@ import {
   extractEmailAddress,
   normalizeOutboundAttachments,
   parseMailboxForSend,
+  parseRecipientList,
 } from "@/lib/email/mailbox";
 import { getProvider } from "@/providers/registry";
 import type {
@@ -66,6 +67,7 @@ export function resolveReplyFromAddress(
 export async function sendConversationReply(args: {
   userId: string;
   conversationId: string;
+  to?: string;
   html?: string;
   text?: string;
   attachments?: OutboundAttachment[];
@@ -91,7 +93,9 @@ export async function sendConversationReply(args: {
   const provider = getProvider(conversation.connection.provider);
   const from = resolveReplyFromAddress(lastInbound.toAddresses, config);
 
-  const replyTo = parseMailboxForSend(lastInbound.fromAddress, "recipient");
+  const replyTo = args.to?.trim()
+    ? parseRecipientList(args.to)
+    : [parseMailboxForSend(lastInbound.fromAddress, "recipient")];
   const subject = conversation.subject.startsWith("Re:")
     ? conversation.subject
     : `Re: ${conversation.subject}`;
@@ -117,7 +121,7 @@ export async function sendConversationReply(args: {
 
   const result = await provider.send(config, {
     from,
-    to: [replyTo],
+    to: replyTo,
     subject,
     html: bodyHtml,
     text: bodyText,
@@ -132,7 +136,7 @@ export async function sendConversationReply(args: {
       connectionId: conversation.connectionId,
       direction: "outbound",
       fromAddress: formatMailboxAddress(from),
-      toAddresses: replyTo,
+      toAddresses: replyTo.join(", "),
       subject,
       bodyHtml: bodyHtml,
       bodyText: bodyText,

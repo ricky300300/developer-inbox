@@ -4,13 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import {
-  ArrowLeft,
-  ChevronDown,
-  Reply,
-  ReplyAll,
-  Star,
-} from "lucide-react";
+import { ArrowLeft, ChevronDown, Reply, ReplyAll, Star } from "lucide-react";
 import { EmailComposer } from "@/components/conversation/email-composer";
 import { AttachmentChip } from "@/components/conversation/attachment-chip";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -112,7 +106,9 @@ function MessageBody({ message }: { message: ThreadMessage }) {
           {split.visible.trim() ? (
             <div className="whitespace-pre-wrap">{split.visible}</div>
           ) : (
-            <span className="text-muted-foreground italic">No message body</span>
+            <span className="text-muted-foreground italic">
+              No message body
+            </span>
           )}
           {hasQuote ? (
             <div className="mt-[0.15rem]">
@@ -272,7 +268,7 @@ function ThreadMessageRow({
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full cursor-pointer items-start gap-[0.75rem] border-b border-black/[0.04] px-[1rem] py-[0.75rem] text-left sm:px-[1.5rem] dark:border-white/[0.06]"
+        className="flex w-full cursor-pointer items-start gap-[0.75rem] border-b border-black/[0.08] px-[1rem] py-[0.75rem] text-left sm:px-[1.5rem] dark:border-white/[0.09]"
       >
         <Avatar
           size="default"
@@ -303,7 +299,7 @@ function ThreadMessageRow({
   }
 
   return (
-    <div className="border-b border-black/[0.04] last:border-b-0 dark:border-white/[0.06]">
+    <div className="border-b border-black/[0.08] last:border-b-0 dark:border-white/[0.09]">
       <div
         role={canToggle ? "button" : undefined}
         tabIndex={canToggle ? 0 : undefined}
@@ -464,9 +460,7 @@ export function ConversationThread({
       )
     : "";
 
-  const replyTo = lastInbound
-    ? formatMailbox(lastInbound.fromAddress)
-    : "";
+  const replyTo = lastInbound ? formatMailbox(lastInbound.fromAddress) : "";
 
   const replyAllTo = useMemo(() => {
     if (!lastInbound) return "";
@@ -505,12 +499,14 @@ export function ConversationThread({
   async function handleSend(body: {
     html: string;
     text: string;
+    to?: string;
     attachments: ComposerAttachment[];
   }) {
     const res = await fetch(`/api/conversations/${conversationId}/reply`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        to: body.to,
         html: body.html,
         text: body.text,
         attachments: body.attachments.map((a) => ({

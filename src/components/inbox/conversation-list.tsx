@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { ChevronLeft, ChevronRight, Paperclip, RefreshCw, Star } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Paperclip,
+  RefreshCw,
+  Star,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   displayNameFromAddress,
@@ -51,8 +57,7 @@ export function ConversationList({
   const [starred, setStarred] = useState<Record<string, boolean>>({});
   const [checked, setChecked] = useState<Record<string, boolean>>({});
 
-  const emptyTitle =
-    folder === "sent" ? "No sent mail" : "Your inbox is empty";
+  const emptyTitle = folder === "sent" ? "No sent mail" : "Your inbox is empty";
   const emptyBody =
     folder === "sent"
       ? "Messages you send will show up here."
@@ -86,7 +91,7 @@ export function ConversationList({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex shrink-0 items-center gap-[0.5rem] border-b border-black/[0.04] px-[0.75rem] py-[0.5rem] dark:border-white/[0.06]">
+      <div className="relative z-10 flex shrink-0 items-center gap-[0.5rem] border-b border-black/[0.04] px-[0.75rem] py-[0.5rem] shadow-[1px 1px 4px #ddd] dark:border-white/[0.06]">
         <h1 className="pl-[0.25rem] text-[1rem] font-semibold tracking-tight capitalize">
           {folder}
         </h1>
@@ -175,17 +180,17 @@ export function ConversationList({
               return (
                 <li
                   key={c.id}
-                  className="border-b border-black/[0.04] dark:border-white/[0.05]"
+                  className="border-b border-black/[0.08] dark:border-white/[0.09]"
                 >
                   <div
                     className={cn(
-                      "group relative flex items-stretch gap-[0.25rem] transition-colors",
-                      "hover:z-[1] hover:bg-[#f6f8fc] dark:hover:bg-muted/40",
+                      "group relative flex items-stretch gap-[0.25rem] border-l-[3px] border-l-transparent transition-colors",
+                      "hover:z-[1] hover:shadow-[1px_1px_4px_#bbb] dark:hover:shadow-[1px_1px_4px_rgba(0,0,0,0.35)]",
                       unread
-                        ? "bg-[#f2f6fc] shadow-[inset_3px_0_0_0_#0b57d0] dark:bg-muted/35 dark:shadow-[inset_3px_0_0_0_rgba(168,199,250,0.55)]"
+                        ? "border-l-[#0b57d0] bg-[#f2f6fc] dark:border-l-[rgba(168,199,250,0.55)] dark:bg-muted/35"
                         : "bg-card",
                       checked[c.id] &&
-                        "bg-[#c2e7ff]/40 shadow-[inset_3px_0_0_0_#0b57d0] dark:bg-muted/50",
+                        "border-l-[#0b57d0] bg-[#c2e7ff]/40 dark:bg-muted/50",
                     )}
                   >
                     <div className="flex shrink-0 items-center gap-[0.125rem] py-[0.75rem] pl-[0.75rem]">
@@ -219,8 +224,7 @@ export function ConversationList({
                         <Star
                           className={cn(
                             "size-[1rem]",
-                            starred[c.id] &&
-                              "fill-amber-400 text-amber-400",
+                            starred[c.id] && "fill-amber-400 text-amber-400",
                           )}
                           strokeWidth={2.25}
                         />

@@ -4,6 +4,7 @@ import { getSessionUser } from "@/lib/auth/session";
 import { sendConversationReply } from "@/lib/conversations/reply";
 
 const replySchema = z.object({
+  to: z.string().optional(),
   html: z.string().optional(),
   text: z.string().optional(),
   attachments: z
@@ -37,6 +38,7 @@ export async function POST(request: Request, { params }: Params) {
     const message = await sendConversationReply({
       userId: user.id,
       conversationId: id,
+      to: parsed.data.to,
       html: parsed.data.html,
       text: parsed.data.text,
       attachments: parsed.data.attachments,

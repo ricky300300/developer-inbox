@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   EmailComposer,
   type EmailComposerHandle,
@@ -126,49 +125,39 @@ export function NewEmailComposer({ fromEmail }: { fromEmail?: string }) {
 
       <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
         <div className="space-y-3 border-b border-border/60 px-4 py-4 sm:px-6">
-          <div className="grid grid-cols-[4.5rem_1fr] items-center gap-x-3 gap-y-3 text-sm sm:grid-cols-[5rem_1fr]">
-            <Label htmlFor="compose-from" className="text-muted-foreground">
-              From
-            </Label>
-            <Input
-              id="compose-from"
-              type="email"
-              autoComplete="email"
-              placeholder={loadingFrom ? "Loading…" : "you@yourdomain.com"}
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              required
-              disabled={loadingFrom}
-              className="min-w-0"
-            />
-
-            <Label htmlFor="compose-to" className="text-muted-foreground">
-              To
-            </Label>
-            <Input
-              id="compose-to"
-              type="text"
-              autoComplete="email"
-              placeholder="name@example.com, other@example.com"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              required
-              autoFocus
-              className="min-w-0"
-            />
-
-            <Label htmlFor="compose-subject" className="text-muted-foreground">
-              Subject
-            </Label>
-            <Input
-              id="compose-subject"
-              type="text"
-              placeholder="Subject"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              className="min-w-0"
-            />
-          </div>
+          <Input
+            id="compose-from"
+            type="email"
+            autoComplete="email"
+            placeholder={loadingFrom ? "Loading…" : "From"}
+            aria-label="From"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            required
+            disabled={loadingFrom}
+            className="min-w-0"
+          />
+          <Input
+            id="compose-to"
+            type="text"
+            autoComplete="email"
+            placeholder="To"
+            aria-label="To"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            required
+            autoFocus
+            className="min-w-0"
+          />
+          <Input
+            id="compose-subject"
+            type="text"
+            placeholder="Subject"
+            aria-label="Subject"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            className="min-w-0"
+          />
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
