@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
   ChevronLeft,
@@ -52,6 +52,7 @@ export function ConversationList({
   total?: number;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [refreshing, startRefresh] = useTransition();
   const [paging, startPaging] = useTransition();
   const [starred, setStarred] = useState<Record<string, boolean>>({});
@@ -74,10 +75,13 @@ export function ConversationList({
   function goToPage(nextPage: number) {
     if (nextPage < 1 || nextPage > totalPages) return;
     startPaging(() => {
-      const params = new URLSearchParams();
+      const params = new URLSearchParams(searchParams.toString());
       if (folder === "sent") params.set("folder", "sent");
+      else params.delete("folder");
       if (query?.trim()) params.set("q", query.trim());
+      else params.delete("q");
       if (nextPage > 1) params.set("page", String(nextPage));
+      else params.delete("page");
       const qs = params.toString();
       router.push(qs ? `/inbox?${qs}` : "/inbox");
     });
@@ -172,10 +176,14 @@ export function ConversationList({
                     "Unknown";
               const snippet = preview?.bodyText?.replace(/\s+/g, " ").trim();
               const attachments = preview?.attachments ?? [];
-              const href =
-                folder === "sent"
-                  ? `/inbox/${c.id}?folder=sent`
-                  : `/inbox/${c.id}`;
+              const mailbox = searchParams.get("mailbox");
+              const hrefParams = new URLSearchParams();
+              if (folder === "sent") hrefParams.set("folder", "sent");
+              if (mailbox) hrefParams.set("mailbox", mailbox);
+              const hrefQs = hrefParams.toString();
+              const href = hrefQs
+                ? `/inbox/${c.id}?${hrefQs}`
+                : `/inbox/${c.id}`;
 
               return (
                 <li

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSessionUser } from "@/lib/auth/session";
 import { encryptSecret } from "@/lib/crypto/secrets";
 import { prisma } from "@/lib/db";
+import { ensureMailboxWithOwnerGrant } from "@/lib/mailboxes/access";
 import { getRequestOrigin } from "@/lib/request-origin";
 import { isProviderId } from "@/providers/registry";
 import type { ProviderId } from "@/providers/types";
@@ -33,6 +34,9 @@ export async function GET(request: Request) {
   const connections = await prisma.providerConnection.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
+    include: {
+      mailboxes: { orderBy: { createdAt: "asc" } },
+    },
   });
 
   const origin = getRequestOrigin(request);
@@ -47,7 +51,13 @@ export async function GET(request: Request) {
         id: c.id,
         provider: c.provider,
         isActive: c.isActive,
-        fromEmail: typeof settings.fromEmail === "string" ? settings.fromEmail : "",
+        fromEmail:
+          typeof settings.fromEmail === "string" ? settings.fromEmail : "",
+        mailboxes: c.mailboxes.map((m) => ({
+          id: m.id,
+          email: m.email,
+          displayName: m.displayName,
+        })),
         hasApiKey: Boolean(c.apiKeyEncrypted),
         hasWebhookSecret: Boolean(c.webhookSecretEncrypted),
         webhookUrl: webhookUrlFor(origin, c.provider, c.id),
@@ -77,7 +87,10 @@ export async function POST(request: Request) {
       parsed.data;
 
     if (!isProviderId(provider)) {
-      return NextResponse.json({ error: "Unsupported provider" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Unsupported provider" },
+        { status: 400 },
+      );
     }
 
     const config = { fromEmail };
@@ -87,7 +100,10 @@ export async function POST(request: Request) {
         where: { id: connectionId, userId: user.id },
       });
       if (!existing) {
-        return NextResponse.json({ error: "Connection not found" }, { status: 404 });
+        return NextResponse.json(
+          { error: "Connection not found" },
+          { status: 404 },
+        );
       }
 
       const updated = await prisma.providerConnection.update({
@@ -104,15 +120,22 @@ export async function POST(request: Request) {
         },
       });
 
+      await ensureMailboxWithOwnerGrant({
+        connectionId: updated.id,
+        email: fromEmail,
+        ownerUserId: user.id,
+        setPreferredIfEmpty: true,
+      });
+
       return NextResponse.json({ connection: { id: updated.id } });
     }
 
     if (!apiKey?.trim()) {
-      return NextResponse.json({ error: "API key is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "API key is required" },
+        { status: 400 },
+      );
     }
-
-    // Webhook signing secret is optional on first save — Resend only
-    // provides it after the webhook URL (which needs connectionId) is registered.
 
     const created = await prisma.providerConnection.create({
       data: {
@@ -127,7 +150,17 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ connection: { id: created.id } }, { status: 201 });
+    await ensureMailboxWithOwnerGrant({
+      connectionId: created.id,
+      email: fromEmail,
+      ownerUserId: user.id,
+      setPreferredIfEmpty: true,
+    });
+
+    return NextResponse.json(
+      { connection: { id: created.id } },
+      { status: 201 },
+    );
   } catch (error) {
     console.error("Provider connection error:", error);
     return NextResponse.json(

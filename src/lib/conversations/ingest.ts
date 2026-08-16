@@ -6,6 +6,7 @@ import {
   normalizeParticipants,
   normalizeSubject,
 } from "@/lib/conversations/normalize";
+import { resolveInboundOurMailbox } from "@/lib/mailboxes/access";
 
 function extractTokenIds(value?: string): string[] {
   if (!value) return [];
@@ -116,6 +117,15 @@ export async function ingestInboundEmail(args: {
     });
   }
 
+  const receivedCandidates = (
+    inbound.receivedFor?.length ? inbound.receivedFor : inbound.to
+  ).map((a) => a.email);
+
+  const { ourAddress, mailboxId } = await resolveInboundOurMailbox({
+    connectionId,
+    candidates: receivedCandidates,
+  });
+
   const message = await prisma.message.create({
     data: {
       conversationId: conversation.id,
@@ -126,6 +136,8 @@ export async function ingestInboundEmail(args: {
       toAddresses: formatAddresses(
         inbound.receivedFor?.length ? inbound.receivedFor : inbound.to,
       ),
+      ourAddress,
+      mailboxId,
       subject: inbound.subject || "(no subject)",
       bodyHtml: inbound.html,
       bodyText: inbound.text,

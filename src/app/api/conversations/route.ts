@@ -16,6 +16,7 @@ export async function GET(request: Request) {
   const conversations = await listConversations({
     userId: user.id,
     query,
+    mailboxParam: searchParams.get("mailbox"),
   });
 
   return NextResponse.json({ conversations });
@@ -77,7 +78,8 @@ export async function POST(request: Request) {
       message.includes("No active email provider") ||
       message.includes("Invalid") ||
       message.includes("attachment") ||
-      message.includes("Attachments")
+      message.includes("Attachments") ||
+      message.includes("accessible mailbox")
         ? 400
         : 500;
     return NextResponse.json({ error: message }, { status });

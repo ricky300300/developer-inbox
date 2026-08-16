@@ -18,6 +18,10 @@ import {
   getFromAddress,
   toDecryptedConfig,
 } from "@/lib/conversations/reply";
+import {
+  getAccessibleMailboxes,
+  resolveOutboundOurMailbox,
+} from "@/lib/mailboxes/access";
 
 function stripHtml(html: string): string {
   return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -82,9 +86,20 @@ export async function sendNewEmail(args: {
 
   const config = toDecryptedConfig(connection);
   const provider = getProvider(connection.provider);
-  const from = args.from?.trim()
-    ? parseMailboxForSend(args.from, "from")
-    : getFromAddress(config);
+
+  const accessible = await getAccessibleMailboxes(args.userId);
+  let from: string;
+  if (args.from?.trim()) {
+    from = parseMailboxForSend(args.from, "from");
+    const fromEmail = extractEmailAddress(from);
+    const allowed = accessible.some((m) => m.email === fromEmail);
+    if (!allowed) {
+      throw new Error("From address is not an accessible mailbox");
+    }
+  } else {
+    const preferred = accessible[0];
+    from = preferred?.email ?? getFromAddress(config);
+  }
 
   const result = await provider.send(config, {
     from,
@@ -98,6 +113,10 @@ export async function sendNewEmail(args: {
   const now = new Date();
   const fromEmail = extractEmailAddress(from);
   const toEmails = to.map((t) => extractEmailAddress(t));
+  const { ourAddress, mailboxId } = await resolveOutboundOurMailbox({
+    connectionId: connection.id,
+    from,
+  });
 
   const conversation = await prisma.conversation.create({
     data: {
@@ -113,6 +132,8 @@ export async function sendNewEmail(args: {
           direction: "outbound",
           fromAddress: formatMailboxAddress(from),
           toAddresses: formatAddresses(to),
+          ourAddress,
+          mailboxId,
           subject,
           bodyHtml: bodyHtml,
           bodyText: bodyText,

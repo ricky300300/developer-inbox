@@ -8,6 +8,7 @@ import {
   parseMailboxForSend,
   parseRecipientList,
 } from "@/lib/email/mailbox";
+import { resolveOutboundOurMailbox } from "@/lib/mailboxes/access";
 import { getProvider } from "@/providers/registry";
 import type {
   DecryptedConfig,
@@ -130,6 +131,11 @@ export async function sendConversationReply(args: {
     attachments,
   });
 
+  const { ourAddress, mailboxId } = await resolveOutboundOurMailbox({
+    connectionId: conversation.connectionId,
+    from,
+  });
+
   const message = await prisma.message.create({
     data: {
       conversationId: conversation.id,
@@ -137,6 +143,8 @@ export async function sendConversationReply(args: {
       direction: "outbound",
       fromAddress: formatMailboxAddress(from),
       toAddresses: replyTo.join(", "),
+      ourAddress,
+      mailboxId,
       subject,
       bodyHtml: bodyHtml,
       bodyText: bodyText,

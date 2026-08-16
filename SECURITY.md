@@ -27,3 +27,4 @@ We aim to acknowledge reports within a few days and will coordinate a fix and di
 - Protect `ENCRYPTION_KEY` — it encrypts provider API keys and webhook secrets at rest
 - Keep Resend webhook signing secrets configured so inbound requests are verified
 - Prefer HTTPS in production so webhook endpoints are reachable securely
+- Mailbox access is grant-based; do not bypass `src/lib/mailboxes/access.ts` when listing or sending

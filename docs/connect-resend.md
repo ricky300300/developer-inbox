@@ -11,7 +11,7 @@ Developer Inbox is **not** an email provider. Resend receives and sends mail; th
 1. A Resend account and API key  
 2. A domain (or Resend receiving address) for inbound mail  
 3. A webhook from Resend → Developer Inbox  
-4. A provider connection inside Developer Inbox Settings  
+4. A provider connection under **Settings → Connection**, plus optional extra addresses under **Settings → Mailboxes**  
 
 When finished, mail sent to your domain appears in the Inbox, and you can reply or compose from the app.
 
@@ -94,19 +94,19 @@ Deploy to Vercel (or similar). Open Settings on your production host — the web
 
 ## Step 4 — Connect Resend in Developer Inbox (3 steps)
 
-Open **Settings → Resend**. The UI walks you through this order on purpose — Resend only shows the signing secret **after** you create a webhook with a URL.
+Open **Settings → Connection**. The UI walks you through this order on purpose — Resend only shows the signing secret **after** you create a webhook with a URL.
 
 ### Step 1 — Save API credentials
 
 1. Paste your Resend **API key** (`re_...`).
-2. Set a **Default From Address** (verified sender on your domain).
+2. Set a **Primary From Address** (verified sender on your domain).
 3. Click **Save & continue**.
 
-Developer Inbox creates a connection id and shows your webhook URL.
+Developer Inbox creates a connection id, seeds that address as a mailbox, and shows your webhook URL.
 
 ### Step 2 — Create the webhook in Resend
 
-1. Copy the **Webhook URL** from Settings (includes your connection id).
+1. Copy the **Webhook URL** from **Settings → Connection** (includes your connection id).
 2. Open [Resend Webhooks](https://resend.com/webhooks) → **Add Webhook**.
 3. Paste the URL and subscribe to **`email.received`**.
 4. Save the webhook.
@@ -114,11 +114,22 @@ Developer Inbox creates a connection id and shows your webhook URL.
 
 ### Step 3 — Save the signing secret
 
-1. Return to Developer Inbox Settings.
+1. Return to **Settings → Connection**.
 2. Paste the signing secret into **Webhook Signing Secret**.
 3. Click **Finish setup**.
 
 Inbound mail will not verify until this secret is saved.
+
+### Multiple addresses (mailboxes)
+
+One Resend connection can cover **many addresses** on your receiving domain (e.g. `you@example.com` and `support@example.com`):
+
+1. Open **Settings → Mailboxes** and add each address.
+2. Optionally mark one as **Preferred** (default Inbox/Sent filter and compose From).
+3. Use the **mailbox switcher** (sidebar on desktop; under search on mobile) to filter **Inbox** and **Sent**, or choose **All mailboxes**.
+4. Compose **From** is a list of addresses you can access (not free text).
+
+Access is grant-based (today: you get direct access as the connection owner). The same model is designed for future **teams** and **role-based** sharing without changing how inbound mail is stored.
 
 ---
 
@@ -128,13 +139,14 @@ Inbound mail will not verify until this secret is saved.
    (e.g. `you@your-receiving-domain.com`).
 2. Within a few seconds you should see a new conversation in **Inbox**.
 3. Open the thread — From / To / Date and the body should appear.
-4. Reply from the thread. Replies send **from the address that received the mail** (not necessarily the Settings default).
+4. Reply from the thread. Replies send **from the address that received the mail** (not necessarily your preferred mailbox).
 
 ### If nothing appears
 
-- Confirm the webhook URL matches Settings (and is publicly reachable by Resend)
+- Confirm the webhook URL matches **Settings → Connection** (and is publicly reachable by Resend)
 - Confirm the event type includes `email.received`
 - Confirm the signing secret matches
+- Check the mailbox switcher (mail to an address you have not added under **Mailboxes** may only show under **All mailboxes**)
 - Check the app logs (in development you will see `[webhook]` lines)
 - In Resend, open the webhook and check delivery / retry history
 - Confirm MX for the receiving domain points at Resend
@@ -144,7 +156,7 @@ Inbound mail will not verify until this secret is saved.
 ## Step 6 — Send a new outbound email (optional)
 
 1. Click **Compose** in the inbox.
-2. **From** prefills with your Settings default; you can edit it to any **verified** Resend sender.
+2. **From** is a select of your accessible mailboxes (preferred / switcher selection is prefilled).
 3. Fill To, Subject, and body, then **Send**.
 4. A new conversation is created for that outbound message.
 
@@ -175,7 +187,8 @@ Notes:
 
 - Resend webhooks carry **metadata only**. Developer Inbox fetches HTML/text via the Receiving API.
 - One Resend API key / connection can cover **multiple domains** on that Resend account.
-- Domains are managed in Resend; Developer Inbox stores credentials and conversations, not DNS.
+- Domains are managed in Resend; Developer Inbox stores credentials, mailbox grants, and conversations — not DNS.
+- Settings is split into **Overview**, **Connection** (API key / webhook), and **Mailboxes** (addresses + preferred).
 
 ---
 

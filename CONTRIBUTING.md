@@ -35,7 +35,9 @@ npm run typecheck
 
 - Provider-specific logic lives under `src/providers/<id>/`.
 - Domain types for email stay provider-agnostic (`InboundEmail`, `OutboundMessage`, etc.).
+- Mailbox access goes through `src/lib/mailboxes/access.ts` (do not scatter grant checks).
 - Prefer matching existing patterns in nearby files (UI, API routes, Prisma).
+- Settings UI: `/settings` overview, `/settings/connection`, `/settings/mailboxes`.
 
 ## Reporting bugs
 

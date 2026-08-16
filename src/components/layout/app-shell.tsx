@@ -27,11 +27,19 @@ import {
   ComposeProvider,
   useCompose,
 } from "@/components/compose/compose-provider";
+import { MailboxSwitcher } from "@/components/layout/mailbox-switcher";
 
 type Counts = {
   inbox: number;
   sent: number;
 };
+
+function withMailbox(href: string, mailbox: string | null) {
+  if (!mailbox) return href;
+  const url = new URL(href, "http://local");
+  url.searchParams.set("mailbox", mailbox);
+  return `${url.pathname}${url.search}`;
+}
 
 function NavContent({
   username,
@@ -47,6 +55,7 @@ function NavContent({
   const router = useRouter();
   const { openCompose } = useCompose();
   const folder = searchParams.get("folder");
+  const mailbox = searchParams.get("mailbox");
   const onInbox = pathname.startsWith("/inbox") && folder !== "sent";
   const onSent = pathname.startsWith("/inbox") && folder === "sent";
 
@@ -59,7 +68,7 @@ function NavContent({
 
   return (
     <>
-      <div className="p-3">
+      <div className="p-3 pb-0">
         <Button
           type="button"
           onClick={() => {
@@ -73,9 +82,11 @@ function NavContent({
         </Button>
       </div>
 
+      <MailboxSwitcher className="px-3 pb-2" onChanged={onNavigate} />
+
       <nav className="flex flex-1 flex-col gap-0.5 pr-3">
         <Link
-          href="/inbox"
+          href={withMailbox("/inbox", mailbox)}
           onClick={onNavigate}
           className={cn(
             "flex min-h-9 items-center gap-3 rounded-r-full py-2 pr-4 pl-4 text-sm transition-colors",
@@ -91,7 +102,7 @@ function NavContent({
           ) : null}
         </Link>
         <Link
-          href="/inbox?folder=sent"
+          href={withMailbox("/inbox?folder=sent", mailbox)}
           onClick={onNavigate}
           className={cn(
             "flex min-h-9 items-center gap-3 rounded-r-full py-2 pr-4 pl-4 text-sm transition-colors",
@@ -162,6 +173,7 @@ function MailSearch() {
   const [, startTransition] = useTransition();
   const query = searchParams.get("q") ?? "";
   const folder = searchParams.get("folder");
+  const mailbox = searchParams.get("mailbox");
   const [search, setSearch] = useState(query);
   const focusedRef = useRef(false);
 
@@ -181,15 +193,14 @@ function MailSearch() {
       startTransition(() => {
         const params = new URLSearchParams();
         if (folder === "sent") params.set("folder", "sent");
+        if (mailbox) params.set("mailbox", mailbox);
         if (next) params.set("q", next);
-        // New search always starts at page 1
         const qs = params.toString();
-        // Keep thread routes on list when searching
         router.replace(qs ? `/inbox?${qs}` : "/inbox");
       });
     }, 300);
     return () => clearTimeout(handle);
-  }, [search, query, router, folder, pathname, startTransition]);
+  }, [search, query, router, folder, mailbox, pathname, startTransition]);
 
   if (!pathname.startsWith("/inbox")) return <div className="flex-1" />;
 
@@ -214,7 +225,7 @@ function MailSearch() {
 
 function AppShellInner({
   username,
-  counts,
+  counts: initialCounts,
   children,
 }: {
   username: string;
@@ -222,6 +233,31 @@ function AppShellInner({
   children: React.ReactNode;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const mailbox = searchParams.get("mailbox");
+  const [counts, setCounts] = useState(initialCounts);
+  const showMobileMailbox = pathname.startsWith("/inbox");
+
+  useEffect(() => {
+    setCounts(initialCounts);
+  }, [initialCounts]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const params = new URLSearchParams({ counts: "1" });
+      if (mailbox) params.set("mailbox", mailbox);
+      const res = await fetch(`/api/mailboxes?${params}`);
+      const data = await res.json();
+      if (!cancelled && res.ok && data.counts) {
+        setCounts(data.counts);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [mailbox]);
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-[#f9f9f9] dark:bg-background md:flex-row">
@@ -282,8 +318,13 @@ function AppShellInner({
       </Dialog>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 px-3 pb-2 md:px-4 md:py-3">
+        <div className="shrink-0 space-y-2 px-3 pb-2 md:space-y-0 md:px-4 md:py-3">
           <MailSearch />
+          {showMobileMailbox ? (
+            <div className="md:hidden">
+              <MailboxSwitcher />
+            </div>
+          ) : null}
         </div>
         <main className="mx-2 mb-2 min-h-0 min-w-0 flex-1 overflow-hidden rounded-sm bg-card shadow-sm ring-1 ring-black/[0.06] dark:ring-white/[0.08] md:mx-0 md:mb-0">
           {children}

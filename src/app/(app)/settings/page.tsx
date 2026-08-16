@@ -1,9 +1,5 @@
-import { ResendSettings } from "@/components/settings/resend-settings";
+import { SettingsOverview } from "@/components/settings/settings-overview";
 
 export default function SettingsPage() {
-  return (
-    <div className="h-full overflow-y-auto">
-      <ResendSettings />
-    </div>
-  );
+  return <SettingsOverview />;
 }

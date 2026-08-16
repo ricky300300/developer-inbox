@@ -14,6 +14,7 @@ Developer Inbox is **not** an email provider. It sits on top of providers like R
 - Inbox with search, conversation list, and email-style thread view
 - Rich reply & compose (bold, lists, links) with HTML that works in major clients
 - Resend provider: inbound webhooks, outbound send, reply-from receiving address
+- Multiple mailbox addresses per connection with sidebar switcher (Inbox / Sent filter)
 - Encrypted API keys & webhook secrets at rest
 - Dark / light theme
 - Responsive layout (mobile drawer nav + desktop sidebar)
@@ -68,11 +69,13 @@ Open [http://localhost:3000](http://localhost:3000), register an account, then c
 
 ### 4. Connect Resend (3 steps)
 
-Resend only shows the webhook signing secret **after** you create a webhook with a URL — so Settings walks you through this order:
+Resend only shows the webhook signing secret **after** you create a webhook with a URL — so **Settings → Connection** walks you through this order:
 
-1. **Settings** → save Resend API key + default From → copy the webhook URL  
+1. **Settings → Connection** → save Resend API key + primary From → copy the webhook URL  
 2. **Resend** → add webhook on `email.received` with that URL → copy `whsec_…`  
-3. **Settings** → paste signing secret → finish  
+3. **Settings → Connection** → paste signing secret → finish  
+
+Then add more addresses under **Settings → Mailboxes** if needed, and use the sidebar (or mobile) **mailbox switcher** to filter Inbox / Sent.
 
 Full walkthrough (also linked from the app under **Docs** / Settings → Setup guide):
 
@@ -104,6 +107,7 @@ src/
   lib/
     auth/              # Sessions, Argon2 passwords
     conversations/     # Ingest, reply, compose, search
+    mailboxes/         # Access grants + preferred mailbox resolution
     email/             # Client-safe HTML serialization
     crypto/            # Secret encryption
   providers/
@@ -169,7 +173,8 @@ Never commit `.env`. `.env.example` is safe to commit.
 | Guide | Description |
 |-------|-------------|
 | `/docs/connect-resend` (in-app) | Same guide, linked from Settings and the sidebar |
-| [docs/connect-resend.md](docs/connect-resend.md) | Domains, MX, webhooks, Settings, testing inbound/outbound |
+| [docs/connect-resend.md](docs/connect-resend.md) | Domains, MX, webhooks, Connection / Mailboxes, testing |
+| App settings | `/settings` overview · `/settings/connection` · `/settings/mailboxes` |
 
 ---
 
@@ -185,8 +190,7 @@ Never commit `.env`. `.env.example` is safe to commit.
 ## Roadmap (not in V1)
 
 - Additional providers (SES, Mailgun, Postmark, SMTP, Gmail, Outlook)
-- Attachment download / storage
-- Teams / multi-user workspaces
+- Teams / multi-user workspaces (mailbox grants + `AppRole` are already modeled for this)
 - Real-time updates (websockets)
 
 ---

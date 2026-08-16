@@ -17,12 +17,6 @@ import {
 } from "@/components/conversation/email-composer";
 import { cn } from "@/lib/utils";
 
-type ConnectionSummary = {
-  id: string;
-  fromEmail: string;
-  isActive: boolean;
-};
-
 type ComposePopupProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -36,6 +30,7 @@ export function ComposePopup({ open, onOpenChange }: ComposePopupProps) {
   const [showCc, setShowCc] = useState(false);
   const [subject, setSubject] = useState("");
   const [from, setFrom] = useState("");
+  const [mailboxes, setMailboxes] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
   const [bodyEmpty, setBodyEmpty] = useState(true);
   const [loadingFrom, setLoadingFrom] = useState(true);
@@ -50,13 +45,18 @@ export function ComposePopup({ open, onOpenChange }: ComposePopupProps) {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/providers/connections");
+        const res = await fetch("/api/mailboxes");
         const data = await res.json();
         if (!res.ok || cancelled) return;
-        const active = (
-          data.connections as ConnectionSummary[] | undefined
-        )?.find((c) => c.isActive && c.fromEmail);
-        if (active?.fromEmail) setFrom(active.fromEmail);
+        const list =
+          (data.mailboxes as Array<{ id: string; email: string }> | undefined) ??
+          [];
+        setMailboxes(list.map((m) => m.email));
+        const preferred =
+          list.find((m) => m.id === data.preferredMailboxId)?.email ??
+          list[0]?.email ??
+          "";
+        if (preferred) setFrom(preferred);
       } finally {
         if (!cancelled) setLoadingFrom(false);
       }
@@ -251,16 +251,33 @@ export function ComposePopup({ open, onOpenChange }: ComposePopupProps) {
       <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
         <div className="shrink-0 border-b border-border/50 px-4">
           <div className="flex items-center gap-2 border-b border-border/40 py-2">
-            <Input
-              type="email"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              placeholder={loadingFrom ? "Loading…" : "From"}
-              aria-label="From"
-              disabled={loadingFrom || sending}
-              required
-              className="h-8 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
-            />
+            {mailboxes.length > 0 ? (
+              <select
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                aria-label="From"
+                disabled={loadingFrom || sending}
+                required
+                className="h-8 w-full border-0 bg-transparent px-0 text-sm outline-none"
+              >
+                {mailboxes.map((email) => (
+                  <option key={email} value={email}>
+                    {email}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <Input
+                type="email"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                placeholder={loadingFrom ? "Loading…" : "From"}
+                aria-label="From"
+                disabled={loadingFrom || sending}
+                required
+                className="h-8 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
+              />
+            )}
           </div>
           <div className="flex items-center gap-2 border-b border-border/40 py-2">
             <Input

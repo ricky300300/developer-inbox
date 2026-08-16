@@ -11,34 +11,39 @@ import {
   type EmailComposerHandle,
 } from "@/components/conversation/email-composer";
 
-type ConnectionSummary = {
-  id: string;
-  fromEmail: string;
-  isActive: boolean;
-};
-
 export function NewEmailComposer({ fromEmail }: { fromEmail?: string }) {
   const router = useRouter();
   const editorRef = useRef<EmailComposerHandle>(null);
   const [to, setTo] = useState("");
   const [subject, setSubject] = useState("");
   const [from, setFrom] = useState(fromEmail ?? "");
+  const [mailboxes, setMailboxes] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
   const [bodyEmpty, setBodyEmpty] = useState(true);
-  const [loadingFrom, setLoadingFrom] = useState(!fromEmail);
+  const [loadingFrom, setLoadingFrom] = useState(true);
 
   useEffect(() => {
-    if (fromEmail) return;
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/providers/connections");
+        const res = await fetch("/api/mailboxes");
         const data = await res.json();
         if (!res.ok || cancelled) return;
-        const active = (data.connections as ConnectionSummary[] | undefined)?.find(
-          (c) => c.isActive && c.fromEmail,
-        );
-        if (active?.fromEmail) setFrom(active.fromEmail);
+        const emails = (data.mailboxes as Array<{ email: string }> | undefined)?.map(
+          (m) => m.email,
+        ) ?? [];
+        setMailboxes(emails);
+        const preferred =
+          emails.find((e) => e === fromEmail) ??
+          (data.preferredMailboxId
+            ? (data.mailboxes as Array<{ id: string; email: string }>)?.find(
+                (m) => m.id === data.preferredMailboxId,
+              )?.email
+            : undefined) ??
+          emails[0] ??
+          fromEmail ??
+          "";
+        if (preferred) setFrom(preferred);
       } finally {
         if (!cancelled) setLoadingFrom(false);
       }
@@ -125,18 +130,36 @@ export function NewEmailComposer({ fromEmail }: { fromEmail?: string }) {
 
       <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
         <div className="space-y-3 border-b border-border/60 px-4 py-4 sm:px-6">
-          <Input
-            id="compose-from"
-            type="email"
-            autoComplete="email"
-            placeholder={loadingFrom ? "Loading…" : "From"}
-            aria-label="From"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            required
-            disabled={loadingFrom}
-            className="min-w-0"
-          />
+          {mailboxes.length > 0 ? (
+            <select
+              id="compose-from"
+              aria-label="From"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              required
+              disabled={loadingFrom}
+              className="flex h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              {mailboxes.map((email) => (
+                <option key={email} value={email}>
+                  {email}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <Input
+              id="compose-from"
+              type="email"
+              autoComplete="email"
+              placeholder={loadingFrom ? "Loading…" : "From"}
+              aria-label="From"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              required
+              disabled={loadingFrom}
+              className="min-w-0"
+            />
+          )}
           <Input
             id="compose-to"
             type="text"

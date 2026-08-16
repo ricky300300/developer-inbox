@@ -21,15 +21,26 @@ enum MessageDirection {
   outbound
 }
 
-model User {
-  id           String   @id @default(cuid())
-  username     String   @unique
-  passwordHash String   @map("password_hash")
-  createdAt    DateTime @default(now()) @map("created_at")
+/// App-level role. super_admin configures connections/mailboxes/grants (and future teams).
+/// member uses only granted mailboxes.
+enum AppRole {
+  super_admin
+  member
+}
 
-  sessions             Session[]
-  providerConnections  ProviderConnection[]
-  conversations        Conversation[]
+model User {
+  id                 String   @id @default(cuid())
+  username           String   @unique
+  passwordHash       String   @map("password_hash")
+  role               AppRole  @default(super_admin)
+  preferredMailboxId String?  @map("preferred_mailbox_id")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  sessions            Session[]
+  providerConnections ProviderConnection[]
+  conversations       Conversation[]
+  mailboxGrants       MailboxGrant[]
+  preferredMailbox    Mailbox?             @relation("UserPreferredMailbox", fields: [preferredMailboxId], references: [id], onDelete: SetNull)
 
   @@map("users")
 }
@@ -59,9 +70,49 @@ model ProviderConnection {
 
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   conversations Conversation[]
+  mailboxes     Mailbox[]
 
   @@index([userId])
   @@map("provider_connections")
+}
+
+/// Address on a provider connection (e.g. ricky@domain.com). Owned by connection, not a single user.
+model Mailbox {
+  id           String   @id @default(cuid())
+  connectionId String   @map("connection_id")
+  email        String
+  displayName  String?  @map("display_name")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  connection       ProviderConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  grants           MailboxGrant[]
+  messages         Message[]
+  preferredByUsers User[]             @relation("UserPreferredMailbox")
+
+  @@unique([connectionId, email])
+  @@index([email])
+  @@map("mailboxes")
+}
+
+/// Access grant: either a direct user (one-to-one) or a future team. Exactly one subject should be set.
+model MailboxGrant {
+  id        String   @id @default(cuid())
+  mailboxId String   @map("mailbox_id")
+  userId    String?  @map("user_id")
+  /// Reserved for future Team model — team-based mailbox access.
+  teamId    String?  @map("team_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  mailbox Mailbox @relation(fields: [mailboxId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([mailboxId, userId])
+  @@unique([mailboxId, teamId])
+  @@index([userId])
+  /// Exact grant checks: userId + mailboxId
+  @@index([userId, mailboxId])
+  @@index([teamId])
+  @@map("mailbox_grants")
 }
 
 model Conversation {
@@ -91,6 +142,9 @@ model Message {
   direction         MessageDirection
   fromAddress       String           @map("from_address")
   toAddresses       String           @map("to_addresses")
+  /// Normalized "our side" address for mailbox filtering (inbound received-for / outbound from).
+  ourAddress        String?          @map("our_address")
+  mailboxId         String?          @map("mailbox_id")
   subject           String
   bodyHtml          String?          @map("body_html")
   bodyText          String?          @map("body_text")
@@ -102,12 +156,19 @@ model Message {
   connectionId      String           @map("connection_id")
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  mailbox      Mailbox?     @relation(fields: [mailboxId], references: [id], onDelete: SetNull)
   attachments  Attachment[]
 
   @@unique([connectionId, providerMessageId])
   @@index([conversationId, sentAt])
   @@index([messageIdHeader])
   @@index([inReplyTo])
+  @@index([ourAddress])
+  @@index([mailboxId])
+  /// Speeds Sent folder: direction=outbound + mailboxId IN (...)
+  @@index([mailboxId, direction])
+  /// Speeds Sent fallback when matching ourAddress
+  @@index([ourAddress, direction])
   @@map("messages")
 }
 
