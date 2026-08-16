@@ -123,6 +123,7 @@ export async function ingestInboundEmail(args: {
 
   const { ourAddress, mailboxId } = await resolveInboundOurMailbox({
     connectionId,
+    ownerUserId: userId,
     candidates: receivedCandidates,
   });
 

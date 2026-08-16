@@ -124,7 +124,7 @@ Inbound mail will not verify until this secret is saved.
 
 One Resend connection can cover **many addresses** on your receiving domain (e.g. `you@example.com` and `support@example.com`):
 
-1. Open **Settings → Mailboxes** and add each address.
+1. Open **Settings → Mailboxes** and add each address, **or** simply receive mail at a new address — inbound ingest auto-creates that mailbox and grants you access.
 2. Optionally mark one as **Preferred** (default Inbox/Sent filter and compose From).
 3. Use the **mailbox switcher** (sidebar on desktop; under search on mobile) to filter **Inbox** and **Sent**, or choose **All mailboxes**.
 4. Compose **From** is a list of addresses you can access (not free text).
@@ -146,7 +146,7 @@ Access is grant-based (today: you get direct access as the connection owner). Th
 - Confirm the webhook URL matches **Settings → Connection** (and is publicly reachable by Resend)
 - Confirm the event type includes `email.received`
 - Confirm the signing secret matches
-- Check the mailbox switcher (mail to an address you have not added under **Mailboxes** may only show under **All mailboxes**)
+- Check the mailbox switcher (new To addresses are created automatically on first inbound; refresh if the switcher was already open)
 - Check the app logs (in development you will see `[webhook]` lines)
 - In Resend, open the webhook and check delivery / retry history
 - Confirm MX for the receiving domain points at Resend

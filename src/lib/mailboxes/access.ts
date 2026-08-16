@@ -122,7 +122,7 @@ export async function findMailboxOnConnection(
 
 /**
  * Ensure a mailbox exists for the connection and grant the connection owner access.
- * Used when Settings adds an address or connection is first saved with fromEmail.
+ * Used by Settings, connection setup, and inbound ingest auto-create.
  */
 export async function ensureMailboxWithOwnerGrant(args: {
   connectionId: string;
@@ -178,10 +178,12 @@ export async function ensureMailboxWithOwnerGrant(args: {
 
 /**
  * Pick our-side address + mailbox for inbound mail.
- * Prefers receivedFor / to that match a known mailbox on the connection.
+ * Prefers a candidate that already has a mailbox on the connection;
+ * otherwise creates a mailbox for the first candidate and grants the owner.
  */
 export async function resolveInboundOurMailbox(args: {
   connectionId: string;
+  ownerUserId: string;
   candidates: string[];
 }): Promise<{ ourAddress: string | null; mailboxId: string | null }> {
   const normalized: string[] = [];
@@ -211,7 +213,14 @@ export async function resolveInboundOurMailbox(args: {
     }
   }
 
-  return { ourAddress: normalized[0] ?? null, mailboxId: null };
+  const email = normalized[0]!;
+  const mailbox = await ensureMailboxWithOwnerGrant({
+    connectionId: args.connectionId,
+    email,
+    ownerUserId: args.ownerUserId,
+    setPreferredIfEmpty: true,
+  });
+  return { ourAddress: email, mailboxId: mailbox.id };
 }
 
 export async function resolveOutboundOurMailbox(args: {
