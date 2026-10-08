@@ -179,6 +179,8 @@ model Attachment {
   contentType          String? @map("content_type")
   size                 Int?
   providerAttachmentId String? @map("provider_attachment_id")
+  /// Private Vercel Blob pathname. Null until the bytes are copied.
+  blobPathname         String? @map("blob_pathname")
 
   message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
