@@ -177,7 +177,7 @@ export async function sendConversationReply(args: {
 
   await prisma.conversation.update({
     where: { id: conversation.id },
-    data: { lastMessageAt: message.sentAt },
+    data: { lastMessageAt: message.sentAt, status: "open" },
   });
 
   return message;

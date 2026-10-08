@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, ChevronDown, Reply, ReplyAll, Star } from "lucide-react";
+import { ArrowLeft, ChevronDown, Reply, ReplyAll, Star, Trash2 } from "lucide-react";
 import { EmailComposer } from "@/components/conversation/email-composer";
 import { AttachmentChip } from "@/components/conversation/attachment-chip";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -22,6 +22,7 @@ import {
 } from "@/lib/email/display";
 import { splitQuotedBody } from "@/lib/email/trim-quotes";
 import type { ComposerAttachment } from "@/lib/email/attachments-client";
+import type { ConversationFolder } from "@/lib/conversations/queries";
 
 export type ThreadMessage = {
   id: string;
@@ -422,20 +423,48 @@ function uniqueAddresses(...groups: string[]) {
   return out;
 }
 
+async function patchConversationTrash(
+  action: "trash" | "restore",
+  conversationId: string,
+) {
+  const res = await fetch("/api/conversations", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, ids: [conversationId] }),
+  });
+  const data = (await res.json().catch(() => ({}))) as {
+    error?: string;
+    updated?: number;
+  };
+  if (!res.ok || !data.updated) {
+    throw new Error(data.error ?? "Couldn't update Trash");
+  }
+}
+
 export function ConversationThread({
   conversationId,
   subject,
   participants,
   messages,
   backHref = "/inbox",
+  folder = "inbox",
+  status = "open",
 }: {
   conversationId: string;
   subject: string;
   participants: string;
   messages: ThreadMessage[];
   backHref?: string;
+  folder?: ConversationFolder;
+  status?: "open" | "archived" | "trashed";
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [moving, setMoving] = useState(false);
+  const inTrash = status === "trashed";
+  const folderLabel =
+    inTrash || folder === "trash" ? "Trash" : folder === "sent" ? "Sent" : "Inbox";
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyMode, setReplyMode] = useState<"reply" | "replyAll">("reply");
   const lastId = messages[messages.length - 1]?.id;
@@ -496,6 +525,58 @@ export function ConversationThread({
     setReplyOpen(true);
   }
 
+  async function moveToTrash() {
+    if (moving || inTrash) return;
+    setMoving(true);
+    try {
+      await patchConversationTrash("trash", conversationId);
+      toast("Conversation moved to Trash", {
+        duration: 8000,
+        action: {
+          label: "Undo",
+          onClick: () => {
+            void patchConversationTrash("restore", conversationId)
+              .then(() => router.refresh())
+              .catch((error: unknown) => {
+                toast.error(
+                  error instanceof Error
+                    ? error.message
+                    : "Couldn't update Trash",
+                );
+              });
+          },
+        },
+      });
+      router.push(backHref);
+      router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Couldn't update Trash",
+      );
+      setMoving(false);
+    }
+  }
+
+  async function moveToInbox() {
+    if (moving) return;
+    setMoving(true);
+    try {
+      await patchConversationTrash("restore", conversationId);
+      toast("Conversation moved to Inbox");
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("folder");
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname);
+      router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Couldn't update Trash",
+      );
+    } finally {
+      setMoving(false);
+    }
+  }
+
   async function handleSend(body: {
     html: string;
     text: string;
@@ -524,6 +605,12 @@ export function ConversationThread({
     }
     toast.success("Reply sent");
     setReplyOpen(false);
+    if (inTrash) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("folder");
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname);
+    }
     router.refresh();
   }
 
@@ -538,15 +625,41 @@ export function ConversationThread({
           >
             <ArrowLeft className="size-[1.25rem]" strokeWidth={2.25} />
           </Link>
+          {inTrash ? null : (
+            <button
+              type="button"
+              aria-label="Move to Trash"
+              title="Move to Trash"
+              disabled={moving}
+              onClick={() => void moveToTrash()}
+              className="inline-flex size-[2.5rem] items-center justify-center rounded-full text-foreground hover:bg-muted disabled:opacity-60"
+            >
+              <Trash2 className="size-[1.15rem]" strokeWidth={2.25} />
+            </button>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-[0.5rem] px-[0.5rem] pt-[0.25rem] pb-[0.75rem] sm:px-[0.75rem]">
           <h1 className="text-[1.25rem] font-normal tracking-tight text-balance sm:text-[1.5rem]">
             {subject || "(no subject)"}
           </h1>
           <span className="rounded-[0.25rem] bg-muted px-[0.375rem] py-[0.125rem] text-[0.6875rem] font-medium text-muted-foreground">
-            Inbox
+            {folderLabel}
           </span>
         </div>
+        {inTrash ? (
+          <div className="mx-[0.5rem] mb-[0.75rem] flex flex-wrap items-center gap-[0.75rem] rounded-[0.5rem] bg-[#fef7e0] px-[1rem] py-[0.75rem] text-[0.875rem] text-[#202124] sm:mx-[0.75rem] dark:bg-amber-950/40 dark:text-amber-50">
+            <span className="min-w-0 flex-1">This conversation is in Trash</span>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={moving}
+              className="h-[2rem] rounded-full bg-white px-[0.875rem] text-[0.8125rem] dark:bg-transparent"
+              onClick={() => void moveToInbox()}
+            >
+              Move to Inbox
+            </Button>
+          </div>
+        ) : null}
         <p className="sr-only">{formatAddresses(participants)}</p>
       </header>
 

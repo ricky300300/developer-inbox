@@ -12,6 +12,7 @@ import {
   Send,
   Settings,
   SquarePen,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import { MailboxSwitcher } from "@/components/layout/mailbox-switcher";
 type Counts = {
   inbox: number;
   sent: number;
+  trash: number;
 };
 
 function withMailbox(href: string, mailbox: string | null) {
@@ -56,8 +58,10 @@ function NavContent({
   const { openCompose } = useCompose();
   const folder = searchParams.get("folder");
   const mailbox = searchParams.get("mailbox");
-  const onInbox = pathname.startsWith("/inbox") && folder !== "sent";
+  const onInbox =
+    pathname.startsWith("/inbox") && folder !== "sent" && folder !== "trash";
   const onSent = pathname.startsWith("/inbox") && folder === "sent";
+  const onTrash = pathname.startsWith("/inbox") && folder === "trash";
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -115,6 +119,22 @@ function NavContent({
           <span className="flex-1">Sent</span>
           {counts.sent > 0 ? (
             <span className="text-xs tabular-nums">{counts.sent}</span>
+          ) : null}
+        </Link>
+        <Link
+          href={withMailbox("/inbox?folder=trash", mailbox)}
+          onClick={onNavigate}
+          className={cn(
+            "flex min-h-9 items-center gap-3 rounded-r-full py-2 pr-4 pl-4 text-sm transition-colors",
+            onTrash
+              ? "bg-[#d3e3fd] font-semibold text-[#041e49] dark:bg-[#004a77]/40 dark:text-[#c2e7ff]"
+              : "text-foreground/80 hover:bg-[#e8f0fe] hover:text-[#041e49] dark:hover:bg-[#004a77]/25 dark:hover:text-[#c2e7ff]",
+          )}
+        >
+          <Trash2 className="size-4 shrink-0" />
+          <span className="flex-1">Trash</span>
+          {counts.trash > 0 ? (
+            <span className="text-xs tabular-nums">{counts.trash}</span>
           ) : null}
         </Link>
       </nav>
@@ -192,7 +212,7 @@ function MailSearch() {
       if (next === current) return;
       startTransition(() => {
         const params = new URLSearchParams();
-        if (folder === "sent") params.set("folder", "sent");
+        if (folder === "sent" || folder === "trash") params.set("folder", folder);
         if (mailbox) params.set("mailbox", mailbox);
         if (next) params.set("q", next);
         const qs = params.toString();

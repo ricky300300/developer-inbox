@@ -14,14 +14,15 @@ export default async function AppLayout({
     redirect("/login");
   }
 
-  const [inbox, sent] = await Promise.all([
+  const [inbox, sent, trash] = await Promise.all([
     countConversations({ userId: user.id, folder: "inbox" }),
     countConversations({ userId: user.id, folder: "sent" }),
+    countConversations({ userId: user.id, folder: "trash" }),
   ]);
 
   return (
     <Suspense fallback={null}>
-      <AppShell username={user.username} counts={{ inbox, sent }}>
+      <AppShell username={user.username} counts={{ inbox, sent, trash }}>
         {children}
       </AppShell>
     </Suspense>

@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   if (searchParams.get("counts") === "1") {
     const mailbox = searchParams.get("mailbox");
-    const [inbox, sent] = await Promise.all([
+    const [inbox, sent, trash] = await Promise.all([
       countConversations({
         userId: user.id,
         folder: "inbox",
@@ -30,8 +30,13 @@ export async function GET(request: Request) {
         folder: "sent",
         mailboxParam: mailbox,
       }),
+      countConversations({
+        userId: user.id,
+        folder: "trash",
+        mailboxParam: mailbox,
+      }),
     ]);
-    return NextResponse.json({ counts: { inbox, sent } });
+    return NextResponse.json({ counts: { inbox, sent, trash } });
   }
 
   const mailboxes = await getAccessibleMailboxes(user.id);

@@ -3,6 +3,7 @@ import {
   CONVERSATIONS_PAGE_SIZE,
   countConversations,
   listConversations,
+  parseConversationFolder,
 } from "@/lib/conversations/queries";
 import { getSessionUser } from "@/lib/auth/session";
 import { ConversationList } from "@/components/inbox/conversation-list";
@@ -26,7 +27,7 @@ export default async function InboxPage({
     page: pageParam,
     mailbox: mailboxParam,
   } = await searchParams;
-  const folder = folderParam === "sent" ? "sent" : "inbox";
+  const folder = parseConversationFolder(folderParam);
   const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
   const skip = (page - 1) * CONVERSATIONS_PAGE_SIZE;
 
@@ -52,7 +53,7 @@ export default async function InboxPage({
 
   if (total > 0 && page > totalPages) {
     const params = new URLSearchParams();
-    if (folder === "sent") params.set("folder", "sent");
+    if (folder !== "inbox") params.set("folder", folder);
     if (q?.trim()) params.set("q", q.trim());
     if (mailboxParam) params.set("mailbox", mailboxParam);
     params.set("page", String(totalPages));

@@ -2,7 +2,12 @@ import { prisma } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
 import { getAccessibleMailboxes } from "@/lib/mailboxes/access";
 
-export type ConversationFolder = "inbox" | "sent";
+export type ConversationFolder = "inbox" | "sent" | "trash";
+
+export function parseConversationFolder(value?: string | null): ConversationFolder {
+  if (value === "sent" || value === "trash") return value;
+  return "inbox";
+}
 
 export const CONVERSATIONS_PAGE_SIZE = 50;
 
@@ -62,7 +67,7 @@ function conversationListWhere(args: {
 
   return {
     userId: args.userId,
-    status: "open" as const,
+    status: folder === "trash" ? ("trashed" as const) : ("open" as const),
     ...mailboxFilterWhere({
       folder,
       mailboxIds: args.mailboxIds,

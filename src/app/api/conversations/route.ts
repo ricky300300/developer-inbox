@@ -3,6 +3,10 @@ import { z } from "zod";
 import { getSessionUser } from "@/lib/auth/session";
 import { sendNewEmail } from "@/lib/conversations/compose";
 import { listConversations } from "@/lib/conversations/queries";
+import {
+  restoreConversations,
+  trashConversations,
+} from "@/lib/conversations/trash";
 
 export async function GET(request: Request) {
   const user = await getSessionUser();
@@ -20,6 +24,41 @@ export async function GET(request: Request) {
   });
 
   return NextResponse.json({ conversations });
+}
+
+const trashSchema = z.object({
+  action: z.enum(["trash", "restore"]),
+  ids: z.array(z.string().min(1)).min(1).max(100),
+});
+
+export async function PATCH(request: Request) {
+  const user = await getSessionUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  }
+
+  const parsed = trashSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Invalid input" },
+      { status: 400 },
+    );
+  }
+
+  const ids = [...new Set(parsed.data.ids)];
+  const updated =
+    parsed.data.action === "trash"
+      ? await trashConversations({ userId: user.id, ids })
+      : await restoreConversations({ userId: user.id, ids });
+
+  return NextResponse.json({ updated });
 }
 
 const composeSchema = z.object({

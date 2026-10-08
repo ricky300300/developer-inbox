@@ -2,19 +2,39 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
 import {
   ChevronLeft,
   ChevronRight,
+  Inbox,
   Paperclip,
   RefreshCw,
   Star,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   displayNameFromAddress,
   formatMailListDate,
 } from "@/lib/email/display";
+import type { ConversationFolder } from "@/lib/conversations/queries";
+
+async function patchConversations(action: "trash" | "restore", ids: string[]) {
+  const res = await fetch("/api/conversations", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, ids }),
+  });
+  const data = (await res.json().catch(() => ({}))) as {
+    error?: string;
+    updated?: number;
+  };
+  if (!res.ok || !data.updated) {
+    throw new Error(data.error ?? "Couldn't update Trash");
+  }
+  return data.updated;
+}
 
 export type ConversationListItem = {
   id: string;
@@ -45,7 +65,7 @@ export function ConversationList({
   total = 0,
 }: {
   conversations: ConversationListItem[];
-  folder?: "inbox" | "sent";
+  folder?: ConversationFolder;
   query?: string;
   page?: number;
   pageSize?: number;
@@ -57,14 +77,29 @@ export function ConversationList({
   const [paging, startPaging] = useTransition();
   const [starred, setStarred] = useState<Record<string, boolean>>({});
   const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [moving, startMove] = useTransition();
+  const movingRef = useRef(false);
 
-  const emptyTitle = folder === "sent" ? "No sent mail" : "Your inbox is empty";
+  const selectedIds = conversations
+    .filter((c) => checked[c.id])
+    .map((c) => c.id);
+
+  const emptyTitle =
+    folder === "sent"
+      ? "No sent mail"
+      : folder === "trash"
+        ? "Trash is empty"
+        : "Your inbox is empty";
   const emptyBody =
     folder === "sent"
       ? "Messages you send will show up here."
-      : query
-        ? "No conversations match your search."
-        : "Compose a new email or connect Resend to receive inbound mail.";
+      : folder === "trash"
+        ? query
+          ? "No conversations match your search."
+          : "Conversations you delete will show up here."
+        : query
+          ? "No conversations match your search."
+          : "Compose a new email or connect Resend to receive inbound mail.";
 
   const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const rangeEnd = Math.min(page * pageSize, total);
@@ -76,7 +111,7 @@ export function ConversationList({
     if (nextPage < 1 || nextPage > totalPages) return;
     startPaging(() => {
       const params = new URLSearchParams(searchParams.toString());
-      if (folder === "sent") params.set("folder", "sent");
+      if (folder === "sent" || folder === "trash") params.set("folder", folder);
       else params.delete("folder");
       if (query?.trim()) params.set("q", query.trim());
       else params.delete("q");
@@ -93,12 +128,83 @@ export function ConversationList({
     });
   }
 
+  function applyTrashAction(action: "trash" | "restore", ids: string[]) {
+    if (ids.length === 0 || movingRef.current) return;
+    movingRef.current = true;
+    startMove(async () => {
+      try {
+        const updated = await patchConversations(action, ids);
+        setChecked({});
+        if (action === "trash") {
+          toast(
+            updated === 1
+              ? "Conversation moved to Trash"
+              : `${updated} conversations moved to Trash`,
+            {
+              duration: 8000,
+              action: {
+                label: "Undo",
+                onClick: () => {
+                  void patchConversations("restore", ids)
+                    .then(() => router.refresh())
+                    .catch((error: unknown) => {
+                      toast.error(
+                        error instanceof Error
+                          ? error.message
+                          : "Couldn't update Trash",
+                      );
+                    });
+                },
+              },
+            },
+          );
+        } else {
+          toast(
+            updated === 1
+              ? "Conversation moved to Inbox"
+              : `${updated} conversations moved to Inbox`,
+          );
+        }
+        router.refresh();
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Couldn't update Trash",
+        );
+      } finally {
+        movingRef.current = false;
+      }
+    });
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="relative z-10 flex shrink-0 items-center gap-[0.5rem] border-b border-black/[0.04] px-[0.75rem] py-[0.5rem] shadow-[1px 1px 4px #ddd] dark:border-white/[0.06]">
         <h1 className="pl-[0.25rem] text-[1rem] font-semibold tracking-tight capitalize">
           {folder}
         </h1>
+        {selectedIds.length > 0 ? (
+          folder === "trash" ? (
+            <button
+              type="button"
+              disabled={moving}
+              onClick={() => applyTrashAction("restore", selectedIds)}
+              className="inline-flex h-[2rem] items-center gap-[0.35rem] rounded-full px-[0.75rem] text-[0.8125rem] font-medium text-foreground hover:bg-muted disabled:opacity-60"
+            >
+              <Inbox className="size-[1rem]" strokeWidth={2.25} />
+              Move to Inbox
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={moving}
+              onClick={() => applyTrashAction("trash", selectedIds)}
+              className="inline-flex h-[2rem] items-center gap-[0.35rem] rounded-full px-[0.75rem] text-[0.8125rem] font-medium text-foreground hover:bg-muted disabled:opacity-60"
+            >
+              <Trash2 className="size-[1rem]" strokeWidth={2.25} />
+              Move to Trash
+            </button>
+          )
+        ) : null}
         {query ? (
           <span className="min-w-0 truncate text-[0.875rem] text-muted-foreground">
             Results for “{query}”
@@ -178,7 +284,7 @@ export function ConversationList({
               const attachments = preview?.attachments ?? [];
               const mailbox = searchParams.get("mailbox");
               const hrefParams = new URLSearchParams();
-              if (folder === "sent") hrefParams.set("folder", "sent");
+              if (folder !== "inbox") hrefParams.set("folder", folder);
               if (mailbox) hrefParams.set("mailbox", mailbox);
               const hrefQs = hrefParams.toString();
               const href = hrefQs
@@ -289,6 +395,7 @@ export function ConversationList({
                         className={cn(
                           "flex items-center gap-[0.35rem] justify-self-start text-[0.75rem] whitespace-nowrap text-muted-foreground sm:justify-self-end",
                           unread && "font-bold text-foreground",
+                          folder !== "trash" && "sm:group-hover:invisible",
                         )}
                       >
                         {attachments.length > 0 ? (
@@ -303,6 +410,18 @@ export function ConversationList({
                         </span>
                       </span>
                     </Link>
+                    {folder !== "trash" ? (
+                      <button
+                        type="button"
+                        aria-label="Move to Trash"
+                        title="Move to Trash"
+                        disabled={moving}
+                        onClick={() => applyTrashAction("trash", [c.id])}
+                        className="absolute top-1/2 right-[0.75rem] inline-flex size-[2rem] -translate-y-1/2 items-center justify-center rounded-full bg-inherit text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-60 sm:pointer-events-none sm:opacity-0 sm:group-hover:pointer-events-auto sm:group-hover:opacity-100"
+                      >
+                        <Trash2 className="size-[1rem]" strokeWidth={2.25} />
+                      </button>
+                    ) : null}
                   </div>
                 </li>
               );

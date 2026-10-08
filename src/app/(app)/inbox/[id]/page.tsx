@@ -5,6 +5,7 @@ import { getSessionUser } from "@/lib/auth/session";
 import {
   getConversationForUser,
   markConversationRead,
+  parseConversationFolder,
 } from "@/lib/conversations/queries";
 import { ConversationThread } from "@/components/conversation/thread";
 
@@ -13,13 +14,14 @@ export default async function ConversationPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ folder?: string }>;
+  searchParams: Promise<{ folder?: string; mailbox?: string }>;
 }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
   const { id } = await params;
-  const { folder } = await searchParams;
+  const { folder: folderParam, mailbox } = await searchParams;
+  const folder = parseConversationFolder(folderParam);
 
   const conversation = await getConversationForUser({
     userId: user.id,
@@ -37,7 +39,11 @@ export default async function ConversationPage({
     });
   }
 
-  const backHref = folder === "sent" ? "/inbox?folder=sent" : "/inbox";
+  const backParams = new URLSearchParams();
+  if (folder !== "inbox") backParams.set("folder", folder);
+  if (mailbox) backParams.set("mailbox", mailbox);
+  const backQs = backParams.toString();
+  const backHref = backQs ? `/inbox?${backQs}` : "/inbox";
 
   return (
     <ConversationThread
@@ -46,6 +52,8 @@ export default async function ConversationPage({
       participants={conversation.participants}
       messages={conversation.messages}
       backHref={backHref}
+      folder={folder}
+      status={conversation.status}
     />
   );
 }

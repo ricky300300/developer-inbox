@@ -60,7 +60,7 @@ async function findConversationBySubjectParticipants(args: {
     where: {
       userId: args.userId,
       connectionId: args.connectionId,
-      status: "open",
+      status: { in: ["open", "trashed"] },
     },
     orderBy: { lastMessageAt: "desc" },
     take: 50,
@@ -165,6 +165,7 @@ export async function ingestInboundEmail(args: {
       lastMessageAt: inbound.receivedAt,
       subject: conversation.subject || inbound.subject,
       unread: true,
+      status: "open",
     },
   });
 
