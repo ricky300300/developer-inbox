@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { copyMessageAttachmentsToBlob } from "@/lib/attachments/copy-inbound";
 import { ingestInboundEmail } from "@/lib/conversations/ingest";
 import { toDecryptedConfig } from "@/lib/conversations/reply";
 import { prisma } from "@/lib/db";
@@ -108,6 +109,14 @@ export async function POST(request: Request, { params }: Params) {
       created: result.created,
       conversationId: result.conversation.id,
       messageId: result.message.id,
+    });
+
+    after(async () => {
+      try {
+        await copyMessageAttachmentsToBlob(result.message.id);
+      } catch (error) {
+        console.error("[attachments] inbound copy failed", error);
+      }
     });
 
     return NextResponse.json({

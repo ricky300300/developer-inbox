@@ -159,6 +159,12 @@ export async function sendNewEmail(args: {
   const createdMessage = conversation.messages[0];
   if (createdMessage?.attachments.length) {
     await persistOutboundAttachmentFiles(
+      {
+        id: createdMessage.id,
+        connectionId: createdMessage.connectionId,
+        mailboxId: createdMessage.mailboxId,
+        ourAddress: createdMessage.ourAddress,
+      },
       createdMessage.attachments,
       attachments,
     );

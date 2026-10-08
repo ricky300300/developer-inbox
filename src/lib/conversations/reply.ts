@@ -163,7 +163,16 @@ export async function sendConversationReply(args: {
   });
 
   if (message.attachments.length) {
-    await persistOutboundAttachmentFiles(message.attachments, attachments);
+    await persistOutboundAttachmentFiles(
+      {
+        id: message.id,
+        connectionId: message.connectionId,
+        mailboxId: message.mailboxId,
+        ourAddress: message.ourAddress,
+      },
+      message.attachments,
+      attachments,
+    );
   }
 
   await prisma.conversation.update({

@@ -1,35 +1,22 @@
 import { Resend } from "resend";
 import { prisma } from "@/lib/db";
 import { toDecryptedConfig } from "@/lib/conversations/reply";
-import { readLocalAttachment } from "@/lib/attachments/storage";
+import { fetchResendAttachmentBytes } from "@/lib/attachments/resend-file";
+import {
+  attachmentBlobPath,
+  ensureMessageMailboxId,
+  isBlobConfigured,
+  readBlobAttachment,
+  readDiskAttachment,
+  readLegacyDiskAttachment,
+  storeAttachmentBytes,
+} from "@/lib/attachments/storage";
 
 export type ResolvedAttachment = {
   filename: string;
   contentType: string;
   body: Buffer;
 };
-
-async function resolveProviderAttachmentId(args: {
-  resend: Resend;
-  direction: "inbound" | "outbound";
-  emailId: string;
-  filename: string;
-  currentId: string | null;
-}): Promise<string | null> {
-  if (args.currentId) return args.currentId;
-
-  const list =
-    args.direction === "inbound"
-      ? await args.resend.emails.receiving.attachments.list({
-          emailId: args.emailId,
-        })
-      : await args.resend.emails.attachments.list({ emailId: args.emailId });
-
-  const match = list.data?.data?.find(
-    (item) => item.filename === args.filename,
-  );
-  return match?.id ?? list.data?.data?.[0]?.id ?? null;
-}
 
 export async function resolveAttachmentDownload(args: {
   userId: string;
@@ -53,72 +40,85 @@ export async function resolveAttachmentDownload(args: {
 
   if (!attachment) return null;
 
-  const local = await readLocalAttachment(attachment.id);
-  if (local) {
-    return {
-      filename: attachment.filename,
-      contentType: attachment.contentType || "application/octet-stream",
-      body: local,
-    };
-  }
-
-  const connection = attachment.message.conversation.connection;
-  const config = toDecryptedConfig(connection);
-  const resend = new Resend(config.apiKey);
-  const emailId = attachment.message.providerMessageId;
-  const direction = attachment.message.direction;
-
-  const providerAttachmentId = await resolveProviderAttachmentId({
-    resend,
-    direction,
-    emailId,
-    filename: attachment.filename,
-    currentId: attachment.providerAttachmentId,
+  const filename = attachment.filename || "attachment";
+  const contentType = attachment.contentType || "application/octet-stream";
+  const packaged = (body: Buffer, type = contentType, name = filename) => ({
+    filename: name,
+    contentType: type || "application/octet-stream",
+    body,
   });
 
-  if (!providerAttachmentId) {
-    throw new Error("Attachment file is not available for download");
+  if (attachment.blobPathname && isBlobConfigured()) {
+    try {
+      const stored = await readBlobAttachment(attachment.blobPathname);
+      if (stored) return packaged(stored);
+    } catch (error) {
+      console.error("[attachments] blob read failed", {
+        attachmentId: attachment.id,
+        error,
+      });
+    }
   }
 
-  if (
-    providerAttachmentId &&
-    providerAttachmentId !== attachment.providerAttachmentId
-  ) {
+  if (!isBlobConfigured()) {
+    const legacy = await readLegacyDiskAttachment(attachment.id);
+    if (legacy) return packaged(legacy);
+  }
+
+  const message = attachment.message;
+  const mailboxId = await ensureMessageMailboxId(message);
+
+  if (!isBlobConfigured() && mailboxId) {
+    const disk = await readDiskAttachment(
+      attachmentBlobPath({
+        connectionId: message.connectionId,
+        mailboxId,
+        attachmentId: attachment.id,
+        filename: attachment.filename,
+      }),
+    );
+    if (disk) return packaged(disk);
+  }
+
+  const connection = message.conversation.connection;
+  const config = toDecryptedConfig(connection);
+  const resend = new Resend(config.apiKey);
+  const file = await fetchResendAttachmentBytes({
+    resend,
+    direction: message.direction,
+    emailId: message.providerMessageId,
+    filename: attachment.filename,
+    providerAttachmentId: attachment.providerAttachmentId,
+  });
+
+  if (file.providerAttachmentId !== attachment.providerAttachmentId) {
     await prisma.attachment.update({
       where: { id: attachment.id },
-      data: { providerAttachmentId },
+      data: { providerAttachmentId: file.providerAttachmentId },
     });
   }
 
-  const result =
-    direction === "inbound"
-      ? await resend.emails.receiving.attachments.get({
-          emailId,
-          id: providerAttachmentId,
-        })
-      : await resend.emails.attachments.get({
-          emailId,
-          id: providerAttachmentId,
-        });
-
-  if (result.error || !result.data?.download_url) {
-    throw new Error(
-      result.error?.message ?? "Failed to fetch attachment from provider",
-    );
+  if (mailboxId) {
+    try {
+      await storeAttachmentBytes({
+        connectionId: message.connectionId,
+        mailboxId,
+        attachmentId: attachment.id,
+        filename: attachment.filename,
+        contentType: attachment.contentType ?? file.contentType,
+        body: file.body,
+      });
+    } catch (error) {
+      console.error("[attachments] download backfill failed", {
+        attachmentId: attachment.id,
+        error,
+      });
+    }
   }
 
-  const fileRes = await fetch(result.data.download_url);
-  if (!fileRes.ok) {
-    throw new Error("Failed to download attachment content");
-  }
-
-  const body = Buffer.from(await fileRes.arrayBuffer());
-  return {
-    filename: attachment.filename || result.data.filename || "attachment",
-    contentType:
-      attachment.contentType ||
-      result.data.content_type ||
-      "application/octet-stream",
-    body,
-  };
+  return packaged(
+    file.body,
+    attachment.contentType || file.contentType || "application/octet-stream",
+    attachment.filename || file.filename,
+  );
 }
