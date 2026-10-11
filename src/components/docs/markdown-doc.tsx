@@ -1,8 +1,34 @@
 import ReactMarkdown from "react-markdown";
+import { cn } from "@/lib/utils";
 
-export function MarkdownDoc({ source }: { source: string }) {
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+}
+
+function headingText(children: React.ReactNode): string {
+  if (typeof children === "string") return children;
+  if (Array.isArray(children)) return children.map(headingText).join("");
+  if (children && typeof children === "object" && "props" in children) {
+    return headingText(
+      (children as { props: { children?: React.ReactNode } }).props.children,
+    );
+  }
+  return "";
+}
+
+export function MarkdownDoc({
+  source,
+  className,
+}: {
+  source: string;
+  className?: string;
+}) {
   return (
-    <article className="space-y-4 text-sm leading-relaxed text-foreground [&_a]:text-foreground [&_a]:underline [&_a]:underline-offset-4 [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:text-muted-foreground [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_h1]:text-2xl [&_h1]:font-semibold [&_h1]:tracking-tight [&_h2]:mt-8 [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:mt-6 [&_h3]:text-base [&_h3]:font-medium [&_hr]:my-8 [&_hr]:border-border [&_li]:ml-4 [&_li]:list-disc [&_ol>li]:list-decimal [&_p]:text-muted-foreground [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:border [&_pre]:border-border/60 [&_pre]:bg-muted/30 [&_pre]:p-3 [&_pre]:font-mono [&_pre]:text-xs [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_strong]:font-medium [&_strong]:text-foreground [&_ul]:space-y-1">
+    <article className={cn("m-prose", className)}>
       <ReactMarkdown
         components={{
           a: ({ href, children }) => {
@@ -23,6 +49,18 @@ export function MarkdownDoc({ source }: { source: string }) {
                 {children}
               </a>
             );
+          },
+          h1: ({ children }) => {
+            const text = headingText(children);
+            return <h1 id={slugify(text)}>{children}</h1>;
+          },
+          h2: ({ children }) => {
+            const text = headingText(children);
+            return <h2 id={slugify(text)}>{children}</h2>;
+          },
+          h3: ({ children }) => {
+            const text = headingText(children);
+            return <h3 id={slugify(text)}>{children}</h3>;
           },
         }}
       >

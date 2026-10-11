@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SESSION_COOKIE } from "@/lib/auth/constants";
 
-const publicPaths = ["/login", "/register", "/docs"];
+const protectedPrefixes = ["/inbox", "/settings"];
+
+function isStaticAsset(pathname: string) {
+  return /\.[a-zA-Z0-9]+$/.test(pathname);
+}
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -10,21 +14,24 @@ export function middleware(request: NextRequest) {
   if (
     pathname.startsWith("/api/webhooks") ||
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon")
+    pathname.startsWith("/favicon") ||
+    isStaticAsset(pathname)
   ) {
     return NextResponse.next();
   }
 
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   const hasSession = Boolean(token);
-  const isPublic = publicPaths.some(
+  const isProtectedPage = protectedPrefixes.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`),
   );
   const isAuthApi =
     pathname.startsWith("/api/auth/login") ||
     pathname.startsWith("/api/auth/register");
+  const isProtectedApi =
+    pathname.startsWith("/api/") && !isAuthApi && !pathname.startsWith("/api/webhooks");
 
-  if (!hasSession && !isPublic && !isAuthApi && pathname !== "/") {
+  if (!hasSession && (isProtectedPage || isProtectedApi)) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

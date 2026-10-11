@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Developer Inbox">
+  <!-- Solid tile so the mark stays visible on dark and light browser tabs -->
+  <rect width="64" height="64" rx="14" fill="#0B1F2A"/>
+  <rect x="8" y="4" width="48" height="18" rx="4" stroke="#F6FAFB" stroke-width="2.6" opacity="0.55"/>
+  <text x="32" y="17" text-anchor="middle" fill="#F6FAFB" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700">API</text>
+  <path d="M6 38h52l-5 20H11L6 38Z" stroke="#F6FAFB" stroke-width="2.8" stroke-linejoin="round"/>
+  <path d="M14 38v-5c0-3 2.5-5.5 5.5-5.5h25c3 0 5.5 2.5 5.5 5.5v5" stroke="#F6FAFB" stroke-width="2.8" stroke-linecap="round"/>
+  <path d="M16 49h32" stroke="#2DD4BF" stroke-width="3" stroke-linecap="round"/>
+</svg>

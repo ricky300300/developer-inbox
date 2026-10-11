@@ -1,0 +1,292 @@
+/* Marketing site — follows the shared next-themes class on <html>. */
+.marketing {
+  --m-ink: #0b1f2a;
+  --m-ink-soft: #1a3544;
+  --m-mist: #e7f0f3;
+  --m-paper: #f6fafb;
+  --m-accent: #0f8f86;
+  --m-accent-deep: #0b6e67;
+  --m-accent-glow: rgba(15, 143, 134, 0.22);
+  --m-line: rgba(11, 31, 42, 0.12);
+  --m-muted: rgba(11, 31, 42, 0.62);
+  --m-surface: rgba(255, 255, 255, 0.55);
+  --m-surface-strong: rgba(255, 255, 255, 0.9);
+  --m-panel: #ffffff;
+  --m-btn-fg: #f6fafb;
+
+  color: var(--m-ink);
+  background: var(--m-paper);
+  font-family: var(--font-marketing-sans), ui-sans-serif, sans-serif;
+  color-scheme: light;
+}
+
+.dark .marketing {
+  --m-ink: #e8f1f4;
+  --m-ink-soft: #c5d5de;
+  --m-mist: #0f1c24;
+  --m-paper: #0b141a;
+  --m-accent: #2dd4bf;
+  --m-accent-deep: #5eead4;
+  --m-accent-glow: rgba(45, 212, 191, 0.22);
+  --m-line: rgba(232, 241, 244, 0.14);
+  --m-muted: rgba(232, 241, 244, 0.62);
+  --m-surface: rgba(255, 255, 255, 0.06);
+  --m-surface-strong: rgba(255, 255, 255, 0.1);
+  --m-panel: #152029;
+  --m-btn-fg: #0b141a;
+
+  color-scheme: dark;
+}
+
+.marketing .m-display {
+  font-family: var(--font-marketing-sans), ui-sans-serif, sans-serif;
+  letter-spacing: -0.025em;
+  line-height: 1.08;
+  font-weight: 650;
+}
+
+.marketing .m-atmosphere {
+  background:
+    radial-gradient(120% 80% at 10% -10%, rgba(15, 143, 134, 0.18), transparent 55%),
+    radial-gradient(90% 70% at 100% 0%, rgba(26, 53, 68, 0.12), transparent 50%),
+    linear-gradient(180deg, var(--m-mist) 0%, var(--m-paper) 42%, #fff 100%);
+}
+
+.dark .marketing .m-atmosphere {
+  background:
+    radial-gradient(120% 80% at 10% -10%, rgba(45, 212, 191, 0.12), transparent 55%),
+    radial-gradient(90% 70% at 100% 0%, rgba(15, 143, 134, 0.1), transparent 50%),
+    linear-gradient(180deg, var(--m-mist) 0%, var(--m-paper) 55%, #071016 100%);
+}
+
+.marketing .m-grid {
+  background-image:
+    linear-gradient(var(--m-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--m-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(180deg, black 0%, transparent 85%);
+}
+
+@keyframes m-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes m-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes m-sheen {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.marketing .m-animate-in {
+  animation: m-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.marketing .m-animate-in-delay-1 {
+  animation-delay: 0.12s;
+}
+
+.marketing .m-animate-in-delay-2 {
+  animation-delay: 0.24s;
+}
+
+.marketing .m-animate-in-delay-3 {
+  animation-delay: 0.36s;
+}
+
+.marketing .m-float {
+  animation: m-float 7s ease-in-out infinite;
+}
+
+.marketing .m-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  background: var(--m-ink);
+  color: var(--m-btn-fg);
+  padding: 0.85rem 1.35rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.marketing .m-btn-primary:hover {
+  background: var(--m-ink-soft);
+  transform: translateY(-1px);
+}
+
+.marketing .m-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--m-line);
+  background: var(--m-surface);
+  color: var(--m-ink);
+  padding: 0.85rem 1.35rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  backdrop-filter: blur(8px);
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.marketing .m-btn-secondary:hover {
+  border-color: color-mix(in srgb, var(--m-ink) 28%, transparent);
+  background: var(--m-surface-strong);
+  transform: translateY(-1px);
+}
+
+.marketing .m-accent-text {
+  color: var(--m-accent-deep);
+}
+
+.marketing .m-plan-hot {
+  box-shadow: 0 0 0 1px var(--m-accent), 0 24px 48px -28px var(--m-accent-glow);
+}
+
+.marketing .m-prose {
+  font-size: 0.975rem;
+  line-height: 1.7;
+  color: var(--m-ink);
+}
+
+.marketing .m-prose > * + * {
+  margin-top: 1rem;
+}
+
+.marketing .m-prose h1 {
+  font-family: var(--font-marketing-sans), ui-sans-serif, sans-serif;
+  font-size: 2rem;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  margin-top: 0;
+}
+
+.marketing .m-prose h2 {
+  font-family: var(--font-marketing-sans), ui-sans-serif, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--m-line);
+  scroll-margin-top: 5.5rem;
+}
+
+.marketing .m-prose h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-top: 1.75rem;
+  scroll-margin-top: 5.5rem;
+}
+
+.marketing .m-prose p,
+.marketing .m-prose li {
+  color: var(--m-muted);
+}
+
+.marketing .m-prose strong {
+  color: var(--m-ink);
+  font-weight: 600;
+}
+
+.marketing .m-prose a {
+  color: var(--m-accent-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.marketing .m-prose a:hover {
+  color: var(--m-ink);
+}
+
+.marketing .m-prose ul,
+.marketing .m-prose ol {
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.marketing .m-prose ul {
+  list-style: disc;
+}
+
+.marketing .m-prose ol {
+  list-style: decimal;
+}
+
+.marketing .m-prose li::marker {
+  color: var(--m-accent-deep);
+}
+
+.marketing .m-prose hr {
+  margin: 2rem 0;
+  border: 0;
+  border-top: 1px solid var(--m-line);
+}
+
+.marketing .m-prose blockquote {
+  border-left: 3px solid var(--m-accent);
+  padding-left: 1rem;
+  color: var(--m-muted);
+}
+
+.marketing .m-prose code {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.85em;
+  border-radius: 0.35rem;
+  background: var(--m-surface-strong);
+  border: 1px solid var(--m-line);
+  padding: 0.1rem 0.35rem;
+}
+
+.marketing .m-prose pre {
+  overflow-x: auto;
+  border-radius: 0.85rem;
+  border: 1px solid var(--m-line);
+  background: color-mix(in srgb, var(--m-ink) 4%, var(--m-paper));
+  padding: 1rem 1.1rem;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.dark .marketing .m-prose pre {
+  background: color-mix(in srgb, var(--m-ink) 6%, var(--m-paper));
+}
+
+.marketing .m-prose pre code {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing .m-animate-in,
+  .marketing .m-float {
+    animation: none;
+  }
+}
