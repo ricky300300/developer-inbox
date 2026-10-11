@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Developer Inbox">
+  <rect x="8" y="2" width="48" height="20" rx="4" stroke="#0B1F2A" stroke-width="2.6" opacity="0.45"/>
+  <text x="32" y="16" text-anchor="middle" fill="#0B1F2A" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700" opacity="0.85">API</text>
+  <path d="M4 38h56l-5.5 22H9.5L4 38Z" stroke="#0B1F2A" stroke-width="2.8" stroke-linejoin="round"/>
+  <path d="M12 38v-6c0-3.3 2.7-6 6-6h28c3.3 0 6 2.7 6 6v6" stroke="#0B1F2A" stroke-width="2.8" stroke-linecap="round"/>
+  <path d="M16 50h32" stroke="#0F8F86" stroke-width="3" stroke-linecap="round"/>
+</svg>

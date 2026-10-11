@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
-  BookOpen,
   Inbox,
   LogOut,
   Menu,
@@ -14,6 +13,7 @@ import {
   SquarePen,
   Trash2,
 } from "lucide-react";
+import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -153,19 +153,6 @@ function NavContent({
           <Settings className="size-4 shrink-0" />
           Settings
         </Link>
-        <Link
-          href="/docs/connect-resend"
-          onClick={onNavigate}
-          className={cn(
-            "flex min-h-9 items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-            pathname.startsWith("/docs")
-              ? "bg-[#d3e3fd] font-semibold text-[#041e49] dark:bg-[#004a77]/40 dark:text-[#c2e7ff]"
-              : "text-muted-foreground hover:bg-[#e8f0fe] hover:text-[#041e49] dark:hover:bg-[#004a77]/25 dark:hover:text-[#c2e7ff]",
-          )}
-        >
-          <BookOpen className="size-4 shrink-0" />
-          Docs
-        </Link>
         <div className="flex items-center gap-2 px-3 pt-2 pb-1">
           <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
             {username}
@@ -293,10 +280,11 @@ function AppShellInner({
           <Menu className="size-5" />
         </Button>
         <Link
-          href="/inbox"
-          className="min-w-0 flex-1 truncate text-sm font-semibold tracking-tight"
+          href="/"
+          className="inline-flex min-w-0 flex-1 items-center gap-2 truncate text-sm font-semibold tracking-tight"
         >
-          Developer Inbox
+          <Logo decorative className="size-6 shrink-0" />
+          <span className="truncate">Developer Inbox</span>
         </Link>
         <ThemeToggle compact />
       </header>
@@ -304,9 +292,10 @@ function AppShellInner({
       <aside className="hidden w-[15.5rem] shrink-0 flex-col md:flex">
         <div className="flex h-16 items-center px-4">
           <Link
-            href="/inbox"
-            className="text-[1.05rem] font-semibold tracking-tight"
+            href="/"
+            className="inline-flex items-center gap-2 text-[1.05rem] font-semibold tracking-tight"
           >
+            <Logo decorative className="size-7 shrink-0" />
             Developer Inbox
           </Link>
         </div>
@@ -324,11 +313,14 @@ function AppShellInner({
           <DialogHeader className="sr-only">
             <DialogTitle>Navigation</DialogTitle>
           </DialogHeader>
-          <div className="flex h-14 items-center border-b border-border/40 px-4">
-            <span className="text-sm font-semibold tracking-tight">
-              Developer Inbox
-            </span>
-          </div>
+          <Link
+            href="/"
+            className="flex h-14 items-center gap-2 border-b border-border/40 px-4 text-sm font-semibold tracking-tight"
+            onClick={() => setMenuOpen(false)}
+          >
+            <Logo decorative className="size-6 shrink-0" />
+            Developer Inbox
+          </Link>
           <NavContent
             username={username}
             counts={counts}
