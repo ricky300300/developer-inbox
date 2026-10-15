@@ -21,7 +21,7 @@ const FEATURES = [
   },
   {
     title: "Storage that sticks",
-    body: "Conversations, attachments, and mailbox history persist with plan-based storage — from 10 GB through unlimited.",
+    body: "Conversations, attachments, and mailbox history persist with plan-based storage — 1 GB free, 10 GB, or 100 GB.",
   },
 ];
 

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FaqSection } from "@/components/marketing/faq-section";
 import { PricingGrid } from "@/components/marketing/pricing-grid";
 
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Developer Inbox pricing — 10 GB from $5/month through unlimited storage, addresses, and seats.",
+    "Developer Inbox pricing: free with 1 GB and one inbox, Small group at $5/month or $50/year for 10 GB, and Team at $25/month or $250/year for 100 GB. Paid plans include unlimited inboxes.",
 };
 
 export default function PricingPage() {
@@ -17,11 +18,12 @@ export default function PricingPage() {
             Pricing
           </p>
           <h1 className="m-display m-animate-in mt-4 text-4xl font-semibold sm:text-5xl">
-            Persistent capacity, clear monthly pricing
+            Persistent capacity, monthly or yearly
           </h1>
           <p className="m-animate-in m-animate-in-delay-1 mt-5 text-lg text-[var(--m-muted)]">
-            Plans scale storage, mailbox addresses, and team seats together.
-            Start at $5 for 10 GB — grow to unlimited when volume demands it.
+            Paid plans include unlimited inboxes. Free is 1 GB and one inbox.
+            Small group is 10 GB for $5/month or $50/year. Team is 100 GB for
+            $25/month or $250/year.
           </p>
         </div>
 
@@ -35,6 +37,7 @@ export default function PricingPage() {
             <li>Conversation inbox with reply and compose</li>
             <li>Resend integration (more providers on the roadmap)</li>
             <li>Encrypted API keys and webhook secrets</li>
+            <li>One inbox on Free, unlimited inboxes on paid plans</li>
             <li>Multi-mailbox switching and team grants</li>
             <li>Persistent message and attachment storage per plan</li>
           </ul>
@@ -57,6 +60,7 @@ export default function PricingPage() {
           </p>
         </div>
       </div>
+      <FaqSection />
     </div>
   );
 }

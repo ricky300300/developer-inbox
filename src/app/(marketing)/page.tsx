@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { FaqSection } from "@/components/marketing/faq-section";
 import { FeatureSections } from "@/components/marketing/feature-sections";
+import { HowItWorks } from "@/components/marketing/how-it-works";
 import { InboxVisual } from "@/components/marketing/inbox-visual";
 import { PricingGrid } from "@/components/marketing/pricing-grid";
+
+export const metadata: Metadata = {
+  description:
+    "Developer Inbox is the conversation layer for Resend. Free includes 1 GB and one inbox. Small group is $5/month or $50/year for 10 GB. Team is $25/month or $250/year for 100 GB. Paid plans include unlimited inboxes.",
+};
 
 export default function MarketingHomePage() {
   return (
@@ -38,34 +46,45 @@ export default function MarketingHomePage() {
 
       <FeatureSections />
 
-      <section className="border-y border-[var(--m-line)] bg-[var(--m-surface)]">
+      <HowItWorks />
+
+      <section
+        id="pricing"
+        aria-labelledby="pricing-heading"
+        className="border-y border-[var(--m-line)] bg-[var(--m-surface)]"
+      >
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
           <div className="max-w-2xl">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--m-accent-deep)]">
               Pricing
             </p>
-            <h2 className="m-display mt-3 text-3xl font-semibold sm:text-4xl">
+            <h2
+              id="pricing-heading"
+              className="m-display mt-3 text-3xl font-semibold sm:text-4xl"
+            >
               Storage that scales with your mail
             </h2>
             <p className="mt-4 text-base text-[var(--m-muted)] sm:text-lg">
-              From 10 GB at $5/month to unlimited — pick the persistent capacity
-              your inboxes need.
+              Start free with 1 GB and one inbox. Small group is $5 per month
+              or $50 per year for 10 GB and unlimited inboxes. Team is $25 per
+              month or $250 per year for 100 GB.
             </p>
           </div>
           <div className="mt-12">
-            <PricingGrid compact />
+            <PricingGrid />
           </div>
           <p className="mt-8 text-sm text-[var(--m-muted)]">
-            Need every tier?{" "}
             <Link
               href="/pricing"
               className="font-semibold text-[var(--m-accent-deep)] underline-offset-4 hover:underline"
             >
-              See full pricing
+              See what’s included
             </Link>
           </p>
         </div>
       </section>
+
+      <FaqSection />
 
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
         <div className="relative overflow-hidden rounded-[2rem] bg-[#0b1f2a] px-6 py-14 text-[#f6fafb] sm:px-12 dark:bg-[#050a0d]">

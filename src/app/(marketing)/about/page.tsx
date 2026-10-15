@@ -55,8 +55,8 @@ export default function AboutPage() {
             <p className="mt-3">
               Credentials stay encrypted at rest. Inbound arrives over signed
               webhooks. Outbound replies go out through your connected provider.
-              Storage plans — from 10 GB to unlimited — keep threads and files
-              available when you need them.
+              Storage plans — 1 GB free, 10 GB, and 100 GB — keep threads and
+              files available when you need them.
             </p>
           </section>
         </div>

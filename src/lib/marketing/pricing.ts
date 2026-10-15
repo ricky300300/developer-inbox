@@ -1,76 +1,52 @@
+export type BillingPeriod = "monthly" | "yearly";
+
 export type PricingPlan = {
   id: string;
   name: string;
   storage: string;
-  storageGb: number | null;
-  addresses: string;
-  seats: string;
-  priceMonthly: number | null;
+  storageGb: number;
+  inboxes: string;
+  priceMonthly: number;
+  priceYearly: number;
   blurb: string;
   highlighted?: boolean;
 };
 
-/** Storage-led plans with mailbox/team allowances. Prices are USD / month. */
+/** Storage-led plans. Paid plans include unlimited inboxes. Prices are USD. */
 export const PRICING_PLANS: PricingPlan[] = [
   {
-    id: "starter",
-    name: "Starter",
-    storage: "10 GB",
-    storageGb: 10,
-    addresses: "5 addresses",
-    seats: "1 seat",
-    priceMonthly: 5,
-    blurb: "Solo builders wiring their first provider inbox.",
+    id: "free",
+    name: "Free",
+    storage: "1 GB",
+    storageGb: 1,
+    inboxes: "1 inbox",
+    priceMonthly: 0,
+    priceYearly: 0,
+    blurb: "One inbox to try the product and keep a working archive.",
   },
   {
-    id: "plus",
-    name: "Plus",
-    storage: "20 GB",
-    storageGb: 20,
-    addresses: "15 addresses",
-    seats: "3 seats",
-    priceMonthly: 12,
-    blurb: "Small teams shipping support and product mail.",
+    id: "small-group",
+    name: "Small group",
+    storage: "10 GB",
+    storageGb: 10,
+    inboxes: "Unlimited inboxes",
+    priceMonthly: 5,
+    priceYearly: 50,
+    blurb: "A few people sharing support and product mail.",
+    highlighted: true,
   },
   {
     id: "team",
     name: "Team",
     storage: "100 GB",
     storageGb: 100,
-    addresses: "100 addresses",
-    seats: "10 seats",
-    priceMonthly: 29,
-    blurb: "Shared inboxes with room to grow mailboxes.",
-    highlighted: true,
-  },
-  {
-    id: "business",
-    name: "Business",
-    storage: "1 TB",
-    storageGb: 1000,
-    addresses: "1,000 addresses",
-    seats: "25 seats",
-    priceMonthly: 79,
-    blurb: "High-volume domains and persistent archives.",
-  },
-  {
-    id: "scale",
-    name: "Scale",
-    storage: "5 TB",
-    storageGb: 5000,
-    addresses: "5,000 addresses",
-    seats: "100 seats",
-    priceMonthly: 199,
-    blurb: "Multi-brand ops with heavy attachment traffic.",
-  },
-  {
-    id: "unlimited",
-    name: "Unlimited",
-    storage: "Unlimited",
-    storageGb: null,
-    addresses: "Unlimited addresses",
-    seats: "Unlimited seats",
-    priceMonthly: 449,
-    blurb: "Custom limits removed — talk to us for SLAs.",
+    inboxes: "Unlimited inboxes",
+    priceMonthly: 25,
+    priceYearly: 250,
+    blurb: "A shared inbox with room for a heavier archive.",
   },
 ];
+
+export function planPrice(plan: PricingPlan, period: BillingPeriod): number {
+  return period === "yearly" ? plan.priceYearly : plan.priceMonthly;
+}
